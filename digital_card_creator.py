@@ -1,4 +1,3 @@
-import csv
 import os
 from digital_card_generator import DigitalCardGenerator
 from image_text_drawer import ImageTextDrawer
@@ -10,12 +9,13 @@ class EnhancedImageTextDrawer(ImageTextDrawer):
         self.font_path = font_path
         self.font_size = font_size
 
+    ## TODO: parameterize text positions, introduce types
     def create_image_with_text(self, text, image_template_path):
         """Creates an image from a template with the specified text."""
         image = Image.open(image_template_path)
         font = ImageFont.truetype(self.font_path, self.font_size)
         draw = ImageDraw.Draw(image)
-        draw.text((50, 150), text, (0, 0, 0), font=font)
+        draw.text((320, 1600), text, (0, 0, 0), font=font) 
         return image
 
 class DigitalCardImageGenerator(DigitalCardGenerator):
