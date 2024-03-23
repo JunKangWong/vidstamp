@@ -1,49 +1,48 @@
-import os
 import csv
+import os
+from digital_card_generator import DigitalCardGenerator
+from image_text_drawer import ImageTextDrawer
 from PIL import Image, ImageFont, ImageDraw
 import zipfile
 
-class DigitalCardCreator:
-    def __init__(self, csv_file_path, image_template_path, font_path, output_directory, font_size=100):
-        self.csv_file_path = csv_file_path
-        self.image_template_path = image_template_path
+class EnhancedImageTextDrawer(ImageTextDrawer):
+    def __init__(self, font_path, font_size=100):
         self.font_path = font_path
         self.font_size = font_size
-        self.output_directory = output_directory
-        if not os.path.exists(output_directory):
-            os.makedirs(output_directory)
-    
-    def read_csv_and_generate_cards(self):
-        with open(self.csv_file_path, mode='r', newline='') as file:
-            reader = csv.DictReader(file)
-            for i, row in enumerate(reader, start=1):
-                self.generate_card_image(row['Name'], row['Phone Number'], f"card_{i}.png")
 
-    def generate_card_image(self, name, phone_number, output_filename):
-        image = Image.open(self.image_template_path)
+    def create_image_with_text(self, text, image_template_path):
+        """Creates an image from a template with the specified text."""
+        image = Image.open(image_template_path)
         font = ImageFont.truetype(self.font_path, self.font_size)
         draw = ImageDraw.Draw(image)
-        text = f"{name}\n{phone_number}"
-        draw.text((320, 1600), text, (0, 0, 0), font=font)
-        image.save(os.path.join(self.output_directory, output_filename))
-    
-    def zip_output_directory(self):
-        zip_filename = os.path.join(self.output_directory, "digital_cards.zip")
-        with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for root, dirs, files in os.walk(self.output_directory):
-                for file in files:
-                    if file.endswith(".png"):
-                        zipf.write(os.path.join(root, file), arcname=file)
-        return zip_filename
+        draw.text((50, 150), text, (0, 0, 0), font=font)
+        return image
+
+class DigitalCardImageGenerator(DigitalCardGenerator):
+    def __init__(self, csv_file_path, image_template_path, font_path, output_zip_path, font_size=100):
+        super().__init__(csv_file_path)
+        self.image_drawer = EnhancedImageTextDrawer(font_path, font_size)
+        self.image_template_path = image_template_path
+        self.output_zip_path = output_zip_path
+
+    def generate_and_zip_cards(self):
+        """Generates digital card images and saves them directly into a zip file."""
+        with zipfile.ZipFile(self.output_zip_path, 'w') as zipf:
+            self.read_csv_and_generate_cards()
+            for i, card in enumerate(self.cards, start=1):
+                image = self.image_drawer.create_image_with_text(f"{card.name}\n{card.phone_number}", self.image_template_path)
+                img_temp_path = f"/tmp/card_{i}.png"
+                image.save(img_temp_path)
+                zipf.write(img_temp_path, arcname=os.path.basename(img_temp_path))
+                os.remove(img_temp_path)  # Clean up the temporary file
 
 # Example Usage
 if __name__ == "__main__":
-    creator = DigitalCardCreator(
+    generator = DigitalCardImageGenerator(
         csv_file_path="./input/namelist.csv",
         image_template_path="./template/certificate_template2.jpg",
         font_path="./font/Themundayfreeversion-Regular.ttf",
-        output_directory="./output"
+        output_zip_path="./output/digital_cards.zip"
     )
-    creator.read_csv_and_generate_cards()
-    zip_file = creator.zip_output_directory()
-    print(f"Digital cards created and zipped in: {zip_file}")
+    generator.generate_and_zip_cards()
+    print(f"Digital cards have been generated and saved to: {generator.output_zip_path}")
