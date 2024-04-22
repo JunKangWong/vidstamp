@@ -2,12 +2,12 @@ import csv
 
 class DigitalCard:
     """A simple class to represent a digital card."""
-    def __init__(self, name, phone_number):
+    def __init__(self, name, table_number):
         self.name = name
-        self.phone_number = phone_number
+        self.table_number = table_number
 
     def __repr__(self):
-        return f"DigitalCard(Name: {self.name}, Phone Number: {self.phone_number})"
+        return f"DigitalCard(Name: {self.name}, Table No: {self.table_number})"
 
 class DigitalCardGenerator:
     def __init__(self, csv_file_path):
@@ -19,7 +19,7 @@ class DigitalCardGenerator:
         with open(self.csv_file_path, mode='r', newline='') as file:
             reader = csv.DictReader(file)
             for row in reader:
-                self.cards.append(DigitalCard(row['Name'], row['Phone Number']))
+                self.cards.append(DigitalCard(row['Name'], row['Table No']))
 
     def get_digital_cards(self):
         """Returns the list of digital cards."""
