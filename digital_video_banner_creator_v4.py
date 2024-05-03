@@ -10,7 +10,7 @@ text = TextClip("Hello, World!", fontsize=70, color='black', font='Amiri-Bold', 
 text = text.set_duration(4).set_position("center")
 
 # Apply fade-in and fade-out effects (fading from transparent to white and then to black)
-text = text.crossfadein(1).crossfadeout(1)
+text = text.crossfadein(1)
 
 # Set the text to appear at a specific time
 text = text.set_start(4)
