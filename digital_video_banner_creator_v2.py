@@ -1,7 +1,7 @@
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 
 # Create a text clip
-text = TextClip("Hello, World!", fontsize=70, color='white', font='Amiri-Bold')
+text = TextClip("Hello, World!", fontsize=70, color='black', font='Amiri-Bold')
 text = text.set_duration(4).set_pos('center').fadein(1)
 
 # Load the video
