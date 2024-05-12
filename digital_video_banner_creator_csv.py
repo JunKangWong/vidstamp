@@ -21,5 +21,4 @@ class DigitalVideoBannerProcessor:
 if __name__ == "__main__":
     processor = DigitalVideoBannerProcessor(data_source="./input/sample_namelist.csv")
     print(processor.digital_cards)
-
     processor.generate_digital_banner()

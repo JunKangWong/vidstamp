@@ -5,6 +5,7 @@ import datetime
 import os
 import concurrent.futures
 import logging
+import multiprocessing
 
 ## Set up logger
 logger = logging.getLogger(__name__)
@@ -17,6 +18,7 @@ file_handler = logging.FileHandler(
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
+
 
 class DigitalVideoBannerGenerator:
     def __init__(self):
@@ -37,6 +39,16 @@ class DigitalVideoBannerGenerator:
         self.text_duration = 9.5  # TODO: derive this
         self.text_fade_duration = 1
         self.text_entrance_time = 0.5  # TODO: derive this
+
+        self.num_workers = 2  # Or determine based on available resources
+        self.video_pool = multiprocessing.Pool(
+            processes=self.num_workers, initializer=self.load_video_pool
+        )
+
+    def load_video_pool(self):
+        # Load the video clip once for each worker in the pool
+        self.input_video = VideoFileClip(self.input_path)
+        self.input_video_audio = self.input_video.audio
 
     def generate_name(self, name, video_size):
         name_text = TextClip(
@@ -86,32 +98,66 @@ class DigitalVideoBannerGenerator:
 
     @time_decorator
     def process_videos(self, digital_cards: list[DigitalCard]):
-        num_workers = min(os.cpu_count(), 2)  # Limit to 2 workers (adjust as needed)
+        num_workers = min(os.cpu_count(), self.num_workers)
         logger.info(f"Using {num_workers} workers for processing.")
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
-            batch_size = len(digital_cards) // num_workers
-            for i in range(0, len(digital_cards), batch_size):
-                batch = digital_cards[i : i + batch_size]
-                executor.submit(self.process_video_batch, batch)
-                
-    def process_video_batch(self, cards):
-        for card in cards:
-            self.process_video(card.get_name(), card.get_table_number(), card.get_id())
+            # Submit tasks to the executor, and store the futures
+            futures = [executor.submit(self.process_video, card.get_name(), card.get_table_number(), card.get_id()) for card in digital_cards]
+
+            # Ensure all tasks are completed before exiting the 'with' block
+            concurrent.futures.wait(futures)
+
+            # Handle any exceptions that might have occurred in the threads
+            for future in futures:
+                try:
+                    future.result()
+                except Exception as e:
+                    logger.error(f"Error processing video: {e}")
+
+    @time_decorator
+    def process_videos(self, digital_cards: list[DigitalCard]):
+        num_workers = min(os.cpu_count(), self.num_workers)
+        logger.info(f"Using {num_workers} workers for processing.")
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+            # Submit tasks to the executor, and store the futures
+            futures = [
+                executor.submit(
+                    self.process_video,
+                    card.get_name(),
+                    card.get_table_number(),
+                    card.get_id(),
+                )
+                for card in digital_cards
+            ]
+
+            # Ensure all tasks are completed before exiting the 'with' block
+            concurrent.futures.wait(futures)
+
+            # Handle any exceptions that might have occurred in the threads
+            for future in futures:
+                try:
+                    future.result()
+                except Exception as e:
+                    logger.error(f"Error processing video: {e}")
 
     @log_execution_time_with_details
     def process_video(self, name, table_num, id=None):
-        input_vid = VideoFileClip(self.input_path)
-        name_text = self.generate_name(name, input_vid.size)
-        table_text = self.generate_table_num(table_num, input_vid.size)
-        input_aud = input_vid.audio
-        final_video = CompositeVideoClip(
-            [input_vid, name_text, table_text], use_bgclip=True
-        )
-        final_video = final_video.set_audio(input_aud)
-        output_name = self.generate_output_video_name(name, table_num)
-        self.output_video(final_video, output_name)
-        input_vid.close()
+        with self.video_pool.get() as (
+            input_vid,
+            input_aud,
+        ):  # Get video and audio from the pool
+            name_text = self.generate_name(name, input_vid.size)
+            table_text = self.generate_table_num(table_num, input_vid.size)
+
+            final_video = CompositeVideoClip(
+                [input_vid, name_text, table_text], use_bgclip=True
+            )
+            final_video = final_video.set_audio(input_aud)
+            output_name = self.generate_output_video_name(name, table_num)
+            self.output_video(final_video, output_name)
+
 
 if __name__ == "__main__":
     generator = DigitalVideoBannerGenerator()
