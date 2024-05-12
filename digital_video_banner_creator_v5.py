@@ -84,8 +84,23 @@ class DigitalVideoBannerGenerator:
             name, table_num, date=datetime.datetime.now()
         )
 
+    @time_decorator
+    def process_videos(self, digital_cards: list[DigitalCard]):
+        num_workers = min(os.cpu_count(), 2)  # Limit to 2 workers (adjust as needed)
+        logger.info(f"Using {num_workers} workers for processing.")
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+            batch_size = len(digital_cards) // num_workers
+            for i in range(0, len(digital_cards), batch_size):
+                batch = digital_cards[i : i + batch_size]
+                executor.submit(self.process_video_batch, batch)
+                
+    def process_video_batch(self, cards):
+        for card in cards:
+            self.process_video(card.get_name(), card.get_table_number(), card.get_id())
+
     @log_execution_time_with_details
-    def process_video(self, name, table_num, id=None):        
+    def process_video(self, name, table_num, id=None):
         input_vid = VideoFileClip(self.input_path)
         name_text = self.generate_name(name, input_vid.size)
         table_text = self.generate_table_num(table_num, input_vid.size)
@@ -97,32 +112,6 @@ class DigitalVideoBannerGenerator:
         output_name = self.generate_output_video_name(name, table_num)
         self.output_video(final_video, output_name)
         input_vid.close()
-
-    @time_decorator
-    def process_videos(self, digital_cards: list[DigitalCard]):
-        num_workers = os.cpu_count()  # Get the number of available processors
-        logger.info(f"Using {num_workers} workers for processing.")
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
-            # Submit tasks to the executor
-            futures = {
-                executor.submit(
-                    self.process_video,
-                    card.get_name(),
-                    card.get_table_number(),
-                    card.get_id(),
-                ): card
-                for card in digital_cards
-            }
-
-            # Wait for results and handle exceptions
-            for future in concurrent.futures.as_completed(futures):
-                card = futures[future]
-                try:
-                    future.result()  # If an exception occurred during processing, it will be raised here
-                except Exception as e:
-                    logger.error(f"Error processing video for {card}: {e}")
-
 
 if __name__ == "__main__":
     generator = DigitalVideoBannerGenerator()
