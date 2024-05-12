@@ -2,7 +2,7 @@ from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 from digital_card_generator import DigitalCard
 from utility import time_decorator, log_execution_time_with_details
 import datetime
-import logging
+import os
 
 
 class DigitalVideoBannerGenerator:
@@ -107,6 +107,32 @@ class DigitalVideoBannerGenerator:
             name = card.get_name()
             table_no = card.get_table_number()
             self.process_video(name, table_no, id)
+
+
+    # @time_decorator
+    # def process_videos(self, digital_cards: list[DigitalCard]):
+    #     num_workers = os.cpu_count()  # Get the number of available processors
+    #     print(f"Using {num_workers} workers for processing.")
+
+    #     with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+    #         # Submit tasks to the executor
+    #         futures = {
+    #             executor.submit(
+    #                 self.process_video,
+    #                 card.get_name(),
+    #                 card.get_table_number(),
+    #                 card.get_id(),
+    #             ): card
+    #             for card in digital_cards
+    #         }
+
+    #         # Wait for results and handle exceptions
+    #         for future in concurrent.futures.as_completed(futures):
+    #             card = futures[future]
+    #             try:
+    #                 future.result()  # If an exception occurred during processing, it will be raised here
+    #             except Exception as e:
+    #                 logger.error(f"Error processing video for {card}: {e}")
 
 
 if __name__ == "__main__":
