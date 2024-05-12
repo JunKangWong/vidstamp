@@ -22,17 +22,27 @@ class DigitalCard:
     def get_table_number(self):
         return self.table_number
 
+
 class DigitalCardGenerator:
     def __init__(self, csv_file_path):
         self.csv_file_path = csv_file_path
         self.cards = []
 
-    def read_csv_and_generate_cards(self):
-        """Reads the CSV file and generates a list of DigitalCard objects."""
+    # def read_csv_and_generate_cards(self):
+    #     """Reads the CSV file and generates a list of DigitalCard objects."""
+    #     with open(self.csv_file_path, mode="r", newline="") as file:
+    #         reader = csv.DictReader(file)
+    #         for row in reader:
+    #             self.cards.append(DigitalCard(row["Id"], row["Name"], row["Table No"]))
+
+    def read_csv_and_generate_cards(self, start_id=1):  # Add start_id parameter
         with open(self.csv_file_path, mode="r", newline="") as file:
             reader = csv.DictReader(file)
             for row in reader:
-                self.cards.append(DigitalCard(row["Id"], row["Name"], row["Table No"]))
+                if int(row["Id"]) >= start_id:  # Start from specified ID
+                    self.cards.append(
+                        DigitalCard(row["Id"], row["Name"], row["Table No"])
+                    )
 
     def get_digital_cards(self):
         """Returns the list of digital cards."""

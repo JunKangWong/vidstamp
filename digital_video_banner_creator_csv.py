@@ -8,7 +8,22 @@ class DigitalVideoBannerProcessor:
 
     def load_digital_cards(self, input_path):
         cardsGenerator = DigitalCardGenerator(input_path)
-        cardsGenerator.read_csv_and_generate_cards()
+        # Read the last processed ID
+        try:
+            with open(
+                "/Users/junkangwong/Documents/github_repo/digital_card/output/log/last_processed_id.txt",
+                "r",
+            ) as f:
+                start_id = int(f.read()) + 1
+        except FileNotFoundError:
+            start_id = 1
+            with open(
+                "/Users/junkangwong/Documents/github_repo/digital_card/output/log/last_processed_id.txt",
+                "w",
+            ) as f:
+                f.write(str(start_id))
+
+        cardsGenerator.read_csv_and_generate_cards(start_id=start_id)
         return cardsGenerator.get_digital_cards()
 
     ## TODO: validate if digital cards are unique...
