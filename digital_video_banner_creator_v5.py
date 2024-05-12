@@ -3,7 +3,20 @@ from digital_card_generator import DigitalCard
 from utility import time_decorator, log_execution_time_with_details
 import datetime
 import os
+import concurrent.futures
+import logging
 
+## Set up logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+file_handler = logging.FileHandler(
+    "/Users/junkangwong/Documents/github_repo/digital_card/output/log/digital_video_banner.log",
+    "a",
+)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 class DigitalVideoBannerGenerator:
     def __init__(self):
@@ -73,11 +86,13 @@ class DigitalVideoBannerGenerator:
 
     def compose_video(self, name, table_num):
         name = self.generate_name(name)
-        table = self.generate_table_num(table_num)
+        table = self.generate_table_num(table_num)        
+        input_vid = VideoFileClip(self.input_path)
+        input_aud = input_vid.audio
         final_video = CompositeVideoClip(
-            [self.input_video, name, table], use_bgclip=True
+            [input_vid, name, table], use_bgclip=True
         )
-        final_video = final_video.set_audio(self.input_video_audio)
+        final_video = final_video.set_audio(input_aud)
         return final_video
 
     def output_video(self, final_video, output_name):
@@ -100,39 +115,39 @@ class DigitalVideoBannerGenerator:
         output_name = self.generate_output_video_name(name, table_num)
         self.output_video(final_video, output_name)
 
-    @time_decorator
-    def process_videos(self, digital_cards: list[DigitalCard]):
-        for card in digital_cards:
-            id = card.get_id()
-            name = card.get_name()
-            table_no = card.get_table_number()
-            self.process_video(name, table_no, id)
-
-
     # @time_decorator
     # def process_videos(self, digital_cards: list[DigitalCard]):
-    #     num_workers = os.cpu_count()  # Get the number of available processors
-    #     print(f"Using {num_workers} workers for processing.")
+    #     for card in digital_cards:
+    #         id = card.get_id()
+    #         name = card.get_name()
+    #         table_no = card.get_table_number()
+    #         self.process_video(name, table_no, id)
 
-    #     with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
-    #         # Submit tasks to the executor
-    #         futures = {
-    #             executor.submit(
-    #                 self.process_video,
-    #                 card.get_name(),
-    #                 card.get_table_number(),
-    #                 card.get_id(),
-    #             ): card
-    #             for card in digital_cards
-    #         }
 
-    #         # Wait for results and handle exceptions
-    #         for future in concurrent.futures.as_completed(futures):
-    #             card = futures[future]
-    #             try:
-    #                 future.result()  # If an exception occurred during processing, it will be raised here
-    #             except Exception as e:
-    #                 logger.error(f"Error processing video for {card}: {e}")
+    @time_decorator
+    def process_videos(self, digital_cards: list[DigitalCard]):
+        num_workers = os.cpu_count()  # Get the number of available processors
+        logger.info(f"Using {num_workers} workers for processing.")
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+            # Submit tasks to the executor
+            futures = {
+                executor.submit(
+                    self.process_video,
+                    card.get_name(),
+                    card.get_table_number(),
+                    card.get_id(),
+                ): card
+                for card in digital_cards
+            }
+
+            # Wait for results and handle exceptions
+            for future in concurrent.futures.as_completed(futures):
+                card = futures[future]
+                try:
+                    future.result()  # If an exception occurred during processing, it will be raised here
+                except Exception as e:
+                    logger.error(f"Error processing video for {card}: {e}")
 
 
 if __name__ == "__main__":
