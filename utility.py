@@ -36,13 +36,14 @@ def log_execution_time_with_details(func):
         # Extract the details
         name = args[1]  # Assuming 'name' is the second positional argument
         table_num = args[2]  # Assuming 'table_num' is the third positional argument
+        id = args[3]
 
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
 
         logger.info(
-            f"Executing {func.__name__} for name: {name}, table_num: {table_num} "
+            f"Executing {func.__name__} for id: {id}, for name: {name}, table_num: {table_num} "
             f"took {end_time - start_time:.4f} seconds."
         )
         return result

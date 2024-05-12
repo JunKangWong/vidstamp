@@ -95,7 +95,7 @@ class DigitalVideoBannerGenerator:
         )
 
     @log_execution_time_with_details
-    def process_video(self, name, table_num):
+    def process_video(self, name, table_num, id=None):
         final_video = self.compose_video(name, table_num)
         output_name = self.generate_output_video_name(name, table_num)
         self.output_video(final_video, output_name)
@@ -103,9 +103,10 @@ class DigitalVideoBannerGenerator:
     @time_decorator
     def process_videos(self, digital_cards: list[DigitalCard]):
         for card in digital_cards:
+            id = card.get_id()
             name = card.get_name()
             table_no = card.get_table_number()
-            self.process_video(name, table_no)
+            self.process_video(name, table_no, id)
 
 
 if __name__ == "__main__":
