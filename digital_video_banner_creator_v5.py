@@ -38,27 +38,13 @@ class DigitalVideoBannerGenerator:
         self.text_fade_duration = 1
         self.text_entrance_time = 0.5  # TODO: derive this
 
-        # Instance variable
-        self.input_video = None
-        self.input_video_audio = None
-        self.input_video_size = None
-        self.name = "Patricia Thomas"  # TODO: accept a list of name and table number, maybe do not have to reload video repeatedly...
-
-        # Load video into memory
-        self.load_video()
-
-    def load_video(self):
-        self.input_video = VideoFileClip(self.input_path)
-        self.input_video_audio = self.input_video.audio
-        self.input_video_size = self.input_video.size
-
-    def generate_name(self, name):
+    def generate_name(self, name, video_size):
         name_text = TextClip(
             name,
             fontsize=self.name_font_size,
             color=self.font_color,
             font=self.font,
-            size=self.input_video_size,
+            size=video_size,
         )
         name_text = name_text.set_duration(self.text_duration).set_position(
             (self.name_pos_x, self.name_pos_y)
@@ -68,14 +54,14 @@ class DigitalVideoBannerGenerator:
         return name_text
 
     # TODO: remove one of these, they are the same, parameterize the table_num_pos except the text and some sizes.
-    def generate_table_num(self, no):
+    def generate_table_num(self, no, video_size):
         formatted_table_num = "Table No: {}".format(no)
         table_no = TextClip(
             formatted_table_num,
             fontsize=self.table_num_font_size,
             color=self.font_color,
             font=self.font,
-            size=self.input_video_size,
+            size=video_size,
         )
         table_no = table_no.set_duration(self.text_duration).set_position(
             (self.table_num_pos_x, self.table_num_pos_y)
@@ -85,14 +71,15 @@ class DigitalVideoBannerGenerator:
         return table_no
 
     def compose_video(self, name, table_num):
-        name = self.generate_name(name)
-        table = self.generate_table_num(table_num)        
         input_vid = VideoFileClip(self.input_path)
+        name = self.generate_name(name, input_vid.size)
+        table = self.generate_table_num(table_num, input_vid.size)
         input_aud = input_vid.audio
         final_video = CompositeVideoClip(
             [input_vid, name, table], use_bgclip=True
         )
         final_video = final_video.set_audio(input_aud)
+        # input_vid.close()
         return final_video
 
     def output_video(self, final_video, output_name):
@@ -114,15 +101,6 @@ class DigitalVideoBannerGenerator:
         final_video = self.compose_video(name, table_num)
         output_name = self.generate_output_video_name(name, table_num)
         self.output_video(final_video, output_name)
-
-    # @time_decorator
-    # def process_videos(self, digital_cards: list[DigitalCard]):
-    #     for card in digital_cards:
-    #         id = card.get_id()
-    #         name = card.get_name()
-    #         table_no = card.get_table_number()
-    #         self.process_video(name, table_no, id)
-
 
     @time_decorator
     def process_videos(self, digital_cards: list[DigitalCard]):
