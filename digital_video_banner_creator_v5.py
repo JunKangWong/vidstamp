@@ -1,7 +1,8 @@
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 from digital_card_generator import DigitalCard
-from utility import time_decorator
+from utility import time_decorator, log_execution_time_with_details
 import datetime
+import logging
 
 
 class DigitalVideoBannerGenerator:
@@ -93,7 +94,7 @@ class DigitalVideoBannerGenerator:
             name, table_num, date=datetime.datetime.now()
         )
 
-    @time_decorator
+    @log_execution_time_with_details
     def process_video(self, name, table_num):
         final_video = self.compose_video(name, table_num)
         output_name = self.generate_output_video_name(name, table_num)
