@@ -1,6 +1,6 @@
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 from digital_card_generator import DigitalCard
-
+import datetime
 
 class DigitalVideoBannerGenerator:
     def __init__(self):
@@ -92,9 +92,10 @@ class DigitalVideoBannerGenerator:
         self.output_video(final_video, output_name)
 
     def generate_output_video_name(self, name, table_num):
-        return "{}_{}_code.mp4".format(
-            name, table_num
-        )  # TODO: replace code with datetime
+        return "{}_{}_{date:%Y-%m-%d_%H:%M:%S}.mp4".format(
+            name,
+            table_num,
+            date=datetime.datetime.now())
 
     def process_videos(self, digital_cards: list[DigitalCard]):
         for card in digital_cards:
