@@ -70,18 +70,6 @@ class DigitalVideoBannerGenerator:
         table_no = table_no.set_start(self.text_entrance_time)
         return table_no
 
-    def compose_video(self, name, table_num):
-        input_vid = VideoFileClip(self.input_path)
-        name = self.generate_name(name, input_vid.size)
-        table = self.generate_table_num(table_num, input_vid.size)
-        input_aud = input_vid.audio
-        final_video = CompositeVideoClip(
-            [input_vid, name, table], use_bgclip=True
-        )
-        final_video = final_video.set_audio(input_aud)
-        # input_vid.close()
-        return final_video
-
     def output_video(self, final_video, output_name):
         output = "{}/{}".format(self.output_path, output_name)
         final_video.write_videofile(
@@ -97,10 +85,18 @@ class DigitalVideoBannerGenerator:
         )
 
     @log_execution_time_with_details
-    def process_video(self, name, table_num, id=None):
-        final_video = self.compose_video(name, table_num)
+    def process_video(self, name, table_num, id=None):        
+        input_vid = VideoFileClip(self.input_path)
+        name_text = self.generate_name(name, input_vid.size)
+        table_text = self.generate_table_num(table_num, input_vid.size)
+        input_aud = input_vid.audio
+        final_video = CompositeVideoClip(
+            [input_vid, name_text, table_text], use_bgclip=True
+        )
+        final_video = final_video.set_audio(input_aud)
         output_name = self.generate_output_video_name(name, table_num)
         self.output_video(final_video, output_name)
+        input_vid.close()
 
     @time_decorator
     def process_videos(self, digital_cards: list[DigitalCard]):
