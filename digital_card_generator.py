@@ -8,6 +8,12 @@ class DigitalCard:
 
     def __repr__(self):
         return f"DigitalCard(Name: {self.name}, Table No: {self.table_number})"
+    
+    def get_name(self):
+        return self.name
+    
+    def get_table_number(self):
+        return self.table_number
 
 class DigitalCardGenerator:
     def __init__(self, csv_file_path):

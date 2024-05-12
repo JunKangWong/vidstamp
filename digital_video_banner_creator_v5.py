@@ -1,11 +1,12 @@
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
+from digital_card_generator import DigitalCard
 
 
 class DigitalVideoBannerGenerator:
     def __init__(self):
         # Configurations
         self.input_path = "/Users/junkangwong/Documents/github_repo/digital_card/input/sample_vid5.mp4"
-        self.output_path = "/Users/junkangwong/Documents/github_repo/digital_card/output/output_sample_sound2.mp4"
+        self.output_path = "/Users/junkangwong/Documents/github_repo/digital_card/output"
         self.codec = "libx264"
         self.audio_codec = "aac"
         self.bit_rate = "5000k"
@@ -27,8 +28,11 @@ class DigitalVideoBannerGenerator:
         self.input_video_size = None
         self.name = "Patricia Thomas"  # TODO: accept a list of name and table number, maybe do not have to reload video repeatedly...
 
-    def load_video(self, input_path):
-        self.input_video = VideoFileClip(input_path)
+        # Load video into memory
+        self.load_video()
+
+    def load_video(self):
+        self.input_video = VideoFileClip(self.input_path)
         self.input_video_audio = self.input_video.audio
         self.input_video_size = self.input_video.size
 
@@ -73,23 +77,35 @@ class DigitalVideoBannerGenerator:
         final_video = final_video.set_audio(self.input_video_audio)
         return final_video
 
-    def output_video(self, final_video):
+    def output_video(self, final_video, output_name):
+        output = "{}/{}".format(self.output_path, output_name)
         final_video.write_videofile(
-            self.output_path,
+            output,
             codec=self.codec,
             audio_codec=self.audio_codec,  # Specify AAC audio codec
             bitrate=self.bit_rate,
         )
 
-    def process_all(self):
-        self.load_video(self.input_path)
-        final_video = self.compose_video("Baby Johnson", "T2")
-        self.output_video(final_video)
+    def process_video(self, name, table_num):
+        final_video = self.compose_video(name, table_num)
+        output_name = self.generate_output_video_name(name, table_num)
+        self.output_video(final_video, output_name)
+
+    def generate_output_video_name(self, name, table_num):
+        return "{}_{}_code.mp4".format(
+            name, table_num
+        )  # TODO: replace code with datetime
+
+    def process_videos(self, digital_cards: list[DigitalCard]):
+        for card in digital_cards:
+            name = card.get_name()
+            table_no = card.get_table_number()
+            self.process_video(name, table_no)
 
 
 if __name__ == "__main__":
     generator = DigitalVideoBannerGenerator()
-    generator.process_all()
+    generator.process_video("Albert Einstein", "T3")
 
     # Read from excel
     # TODO: check for duplicated data from excel (Validation)
