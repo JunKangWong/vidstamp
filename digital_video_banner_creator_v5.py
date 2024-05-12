@@ -6,7 +6,7 @@ class DigitalVideoBannerGenerator:
     def __init__(self):
         # Configurations
         self.input_path = "/Users/junkangwong/Documents/github_repo/digital_card/input/sample_vid5.mp4"
-        self.output_path = "/Users/junkangwong/Documents/github_repo/digital_card/output"
+        self.output_path = "/Users/junkangwong/Documents/github_repo/digital_card/output/digital_video_banner"
         self.codec = "libx264"
         self.audio_codec = "aac"
         self.bit_rate = "5000k"
