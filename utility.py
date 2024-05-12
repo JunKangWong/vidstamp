@@ -41,6 +41,12 @@ def log_execution_time_with_details(func):
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
+        if id is not None:
+            with open(
+                "/Users/junkangwong/Documents/github_repo/digital_card/output/log/last_processed_id.txt",
+                "w",
+            ) as f:
+                f.write(str(id))  # Update the ID file on success
 
         logger.info(
             f"Executing {func.__name__} for id: {id}, for name: {name}, table_num: {table_num} "

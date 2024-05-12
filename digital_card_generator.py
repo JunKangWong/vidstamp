@@ -4,7 +4,6 @@ class DigitalCard:
     """A simple class to represent a digital card."""
 
     def __init__(self, id, name, table_number):
-        # TODO: add an id row for the excel, to give each records an id for debugging purposes. so that we can begin from where we left off and implement the capability to start off where we stopped from the csv reader..
         self.id = id
         self.name = name
         self.table_number = table_number
