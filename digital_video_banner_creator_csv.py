@@ -13,11 +13,13 @@ class DigitalVideoBannerProcessor:
 
     ## TODO: validate if digital cards are unique...
 
-    def generate_digital_banner(self):
+    def generate_digital_banner(self):        
         bannerGenerator = DigitalVideoBannerGenerator()
-        bannerGenerator.process_video()
+        bannerGenerator.process_videos(self.digital_cards)
 
 
 if __name__ == "__main__":
-    processor = DigitalVideoBannerProcessor(data_source="./input/sample_namelist.csv")
+    processor = DigitalVideoBannerProcessor(data_source="./input/sample_namelist2.csv")
     print(processor.digital_cards)
+    
+    processor.generate_digital_banner()
