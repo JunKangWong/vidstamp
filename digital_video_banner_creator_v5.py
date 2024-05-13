@@ -1,14 +1,17 @@
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 from digital_card_generator import DigitalCard
-from utility import time_decorator, log_execution_time_with_details
 import datetime
-import os
-import concurrent.futures
 import logging
+import multiprocessing as mp
+from typing import Tuple
+import os
+import time
+
 
 ## Set up logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
 
 file_handler = logging.FileHandler(
     "/Users/junkangwong/Documents/github_repo/digital_card/output/log/digital_video_banner.log",
@@ -18,10 +21,26 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(messag
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
+
+def time_decorator(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()  # Capture the start time
+        result = func(*args, **kwargs)  # Execute the function
+        end_time = time.time()  # Capture the end time
+        logger.info(
+            f"Executing {func.__name__} took {end_time - start_time:.4f} seconds."
+        )
+        return result
+
+    return wrapper
+
+
 class DigitalVideoBannerGenerator:
     def __init__(self):
         # Configurations
-        self.input_path = "/Users/junkangwong/Documents/github_repo/digital_card/input/sample_vid5.mp4"
+        self.input_path = (
+            "/Users/junkangwong/Documents/github_repo/digital_card/input/sample.mp4"
+        )
         self.output_path = "/Users/junkangwong/Documents/github_repo/digital_card/output/digital_video_banner"
         self.codec = "libx264"
         self.audio_codec = "aac"
@@ -84,34 +103,86 @@ class DigitalVideoBannerGenerator:
             name, table_num, date=datetime.datetime.now()
         )
 
+    # @time_decorator
+    # def process_videos(self, digital_cards: list[DigitalCard]):
+    #     with mp.Pool(4) as pool:
+    #         pool.map(self.process_video, digital_cards)
+
+    # def process_video(self, digitalCard: DigitalCard):
+    #     name = digitalCard.get_name()
+    #     table_num = digitalCard.get_table_number()
+    #     id = digitalCard.get_id()
+
+    #     # Each process now creates its own VideoFileClip instance
+    #     with VideoFileClip(self.input_path) as input_vid:
+    #         name_text = self.generate_name(name, input_vid.size)
+    #         table_text = self.generate_table_num(table_num, input_vid.size)
+    #         input_aud = input_vid.audio
+
+    #         final_video = CompositeVideoClip(
+    #             [input_vid, name_text, table_text], use_bgclip=True
+    #         )
+    #         final_video = final_video.set_audio(input_aud)
+
+    #         output_name = self.generate_output_video_name(name, table_num)
+    #         self.output_video(final_video, output_name)
+
+    ######################
+
+    def initialize_video_pool(
+        self, num_processes: int
+    ) -> list[Tuple[str, Tuple[int, int]]]:
+        video_pool = []
+        for i in range(num_processes):
+            # Unique filename for each pre-loaded video
+            temp_video_path = f"{self.input_path}_{i}.mp4"
+
+            os.system(f"cp {self.input_path} {temp_video_path}")
+
+            # Instead of pickling VideoFileClip, store video size (width, height)
+            with VideoFileClip(temp_video_path) as input_vid:
+                video_pool.append((temp_video_path, input_vid.size))
+
+        return video_pool
+
     @time_decorator
     def process_videos(self, digital_cards: list[DigitalCard]):
-        num_workers = min(os.cpu_count(), 2)  # Limit to 2 workers (adjust as needed)
-        logger.info(f"Using {num_workers} workers for processing.")
-        
-        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
-            batch_size = len(digital_cards) // num_workers
-            for i in range(0, len(digital_cards), batch_size):
-                batch = digital_cards[i : i + batch_size]
-                executor.submit(self.process_video_batch, batch)
-                
-    def process_video_batch(self, cards):
-        for card in cards:
-            self.process_video(card.get_name(), card.get_table_number(), card.get_id())
+        num_processes = 8
+        video_pool = self.initialize_video_pool(num_processes)
 
-    @log_execution_time_with_details
-    def process_video(self, name, table_num, id=None):
-        input_vid = VideoFileClip(self.input_path)
-        name_text = self.generate_name(name, input_vid.size)
-        table_text = self.generate_table_num(table_num, input_vid.size)
-        input_aud = input_vid.audio
-        final_video = CompositeVideoClip(
-            [input_vid, name_text, table_text], use_bgclip=True
-        )
-        final_video = final_video.set_audio(input_aud)
-        output_name = self.generate_output_video_name(name, table_num)
-        self.output_video(final_video, output_name)
-        input_vid.close()
+        args = [
+            (card, video_pool[i % num_processes])
+            for i, card in enumerate(digital_cards)
+        ]
+        with mp.Pool(num_processes) as pool:
+            pool.starmap(self.process_video, args)
+
+        # Cleanup
+        for temp_video_path, _ in video_pool:
+            os.remove(temp_video_path)
+
+    def process_video(
+        self,
+        digitalCard: DigitalCard,
+        preloaded_video_info: Tuple[str, Tuple[int, int]],
+    ):
+        temp_video_path, video_size = preloaded_video_info
+
+        # Open the video file within the worker process
+        with VideoFileClip(temp_video_path) as input_vid:
+            name = digitalCard.get_name()
+            table_num = digitalCard.get_table_number()
+            id = digitalCard.get_id()
+            input_aud = input_vid.audio
+            name_text = self.generate_name(name, video_size)
+            table_text = self.generate_table_num(table_num, video_size)
+            final_video = CompositeVideoClip(
+                [input_vid, name_text, table_text], use_bgclip=True
+            )
+            final_video = final_video.set_audio(input_aud)
+            output_name = self.generate_output_video_name(name, table_num)
+            self.output_video(final_video, output_name)
+
 
 if __name__ == "__main__":
     generator = DigitalVideoBannerGenerator()
