@@ -150,23 +150,24 @@ class DigitalVideoBannerGenerator:
         num_processes = 8
         video_pool = self.initialize_video_pool(num_processes)
 
-        args = [
-            (card, video_pool[i % num_processes])
-            for i, card in enumerate(digital_cards)
-        ]
-        with mp.Pool(num_processes) as pool:
-            pool.starmap(self.process_video, args)
+        with mp.Pool(
+            processes=num_processes,
+            initializer=self.worker_init,
+            initargs=(video_pool,),
+        ) as pool:
+            pool.map(self.process_video, digital_cards)
 
-        # Cleanup
-        for temp_video_path, _ in video_pool:
-            os.remove(temp_video_path)
+        # ... (Cleanup remains the same)
 
-    def process_video(
-        self,
-        digitalCard: DigitalCard,
-        preloaded_video_info: Tuple[str, Tuple[int, int]],
-    ):
-        temp_video_path, video_size = preloaded_video_info
+    def worker_init(self, video_pool):
+        global global_video_pool
+        global_video_pool = video_pool
+
+    def process_video(self, digitalCard: DigitalCard):
+        process_id = mp.current_process()._identity[0]  # Get process ID in the worker
+
+        # Get the video file based on the process ID (1-based indexing)
+        temp_video_path, video_size = global_video_pool[process_id - 1]
 
         # Open the video file within the worker process
         with VideoFileClip(temp_video_path) as input_vid:
