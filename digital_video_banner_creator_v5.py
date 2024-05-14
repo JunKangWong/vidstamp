@@ -5,6 +5,7 @@ import datetime
 import os
 import concurrent.futures
 import logging
+import time
 
 ## Set up logger
 logger = logging.getLogger(__name__)
@@ -17,6 +18,7 @@ file_handler = logging.FileHandler(
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
+
 
 class DigitalVideoBannerGenerator:
     def __init__(self):
@@ -86,21 +88,15 @@ class DigitalVideoBannerGenerator:
 
     @time_decorator
     def process_videos(self, digital_cards: list[DigitalCard]):
-        num_workers = min(os.cpu_count(), 2)  # Limit to 2 workers (adjust as needed)
-        logger.info(f"Using {num_workers} workers for processing.")
-        
-        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
-            batch_size = len(digital_cards) // num_workers
-            for i in range(0, len(digital_cards), batch_size):
-                batch = digital_cards[i : i + batch_size]
-                executor.submit(self.process_video_batch, batch)
-                
-    def process_video_batch(self, cards):
-        for card in cards:
-            self.process_video(card.get_name(), card.get_table_number(), card.get_id())
+        # num_workers = min(os.cpu_count(), 2)  # Limit to 2 workers (adjust as needed)
+        # logger.info(f"Using {num_workers} workers for processing.")
+        with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
+            executor.map(self.process_video, digital_cards)
 
-    @log_execution_time_with_details
-    def process_video(self, name, table_num, id=None):
+    def process_video(self, digitalCard: DigitalCard):
+        start_time = time.time()
+        name = digitalCard.get_name()
+        table_num = digitalCard.get_table_number()
         input_vid = VideoFileClip(self.input_path)
         name_text = self.generate_name(name, input_vid.size)
         table_text = self.generate_table_num(table_num, input_vid.size)
@@ -112,6 +108,9 @@ class DigitalVideoBannerGenerator:
         output_name = self.generate_output_video_name(name, table_num)
         self.output_video(final_video, output_name)
         input_vid.close()
+        end_time = time.time()
+        logger.info(f"took {end_time - start_time:.4f} seconds.")
+
 
 if __name__ == "__main__":
     generator = DigitalVideoBannerGenerator()
