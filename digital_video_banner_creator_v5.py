@@ -1,14 +1,13 @@
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 from digital_card_generator import DigitalCard
 from utility import time_decorator, log_execution_time_with_details
-import datetime
-import logging
+import os
 
 
 class DigitalVideoBannerGenerator:
     def __init__(self):
         # Configurations
-        self.input_path = "/Users/junkangwong/Documents/github_repo/digital_card/input/sample_vid5.mp4"
+        self.input_path = "/Users/junkangwong/Documents/github_repo/digital_card/input"
         self.output_path = "/Users/junkangwong/Documents/github_repo/digital_card/output/digital_video_banner"
         self.codec = "libx264"
         self.audio_codec = "aac"
@@ -31,21 +30,20 @@ class DigitalVideoBannerGenerator:
         self.input_video_size = None
         self.name = "Patricia Thomas"  # TODO: accept a list of name and table number, maybe do not have to reload video repeatedly...
 
-        # Load video into memory
-        self.load_video()
-
-    def load_video(self):
-        self.input_video = VideoFileClip(self.input_path)
-        self.input_video_audio = self.input_video.audio
-        self.input_video_size = self.input_video.size
-
-    def generate_name(self, name):
+    def generate_name(self, name, vid_size):
+        size = len(name)
+        font_size = self.name_font_size
+        if size > 35:
+            font_size = 30
+        elif size > 25:
+            font_size = 45
+        name = name.title()
         name_text = TextClip(
             name,
-            fontsize=self.name_font_size,
+            fontsize=font_size,
             color=self.font_color,
             font=self.font,
-            size=self.input_video_size,
+            size=vid_size,
         )
         name_text = name_text.set_duration(self.text_duration).set_position(
             (self.name_pos_x, self.name_pos_y)
@@ -54,15 +52,14 @@ class DigitalVideoBannerGenerator:
         name_text = name_text.set_start(self.text_entrance_time)
         return name_text
 
-    # TODO: remove one of these, they are the same, parameterize the table_num_pos except the text and some sizes.
-    def generate_table_num(self, no):
+    def generate_table_num(self, no, vid_size):
         formatted_table_num = "Table No: {}".format(no)
         table_no = TextClip(
             formatted_table_num,
             fontsize=self.table_num_font_size,
             color=self.font_color,
             font=self.font,
-            size=self.input_video_size,
+            size=vid_size,
         )
         table_no = table_no.set_duration(self.text_duration).set_position(
             (self.table_num_pos_x, self.table_num_pos_y)
@@ -80,8 +77,10 @@ class DigitalVideoBannerGenerator:
         final_video = final_video.set_audio(self.input_video_audio)
         return final_video
 
-    def output_video(self, final_video, output_name):
-        output = "{}/{}".format(self.output_path, output_name)
+    def output_video(self, final_video, output_name, branch):
+        output_path = os.path.join(self.output_path, branch)  # Use os.path.join
+        os.makedirs(output_path, exist_ok=True)
+        output = "{}/{}".format(output_path, output_name)
         final_video.write_videofile(
             output,
             codec=self.codec,
@@ -90,15 +89,30 @@ class DigitalVideoBannerGenerator:
         )
 
     def generate_output_video_name(self, name, table_num):
-        return "{}_{}_{date:%Y-%m-%d_%H:%M:%S}.mp4".format(
-            name, table_num, date=datetime.datetime.now()
-        )
+        name = name.title()
+        name = name.replace("\\", "")
+        name = name.replace("/", "")
+        return "T{}_{}.mp4".format(table_num, name)
 
     @log_execution_time_with_details
-    def process_video(self, name, table_num, id=None):
-        final_video = self.compose_video(name, table_num)
+    def process_video(self, name, table_num, language, branch, id=None):
+        if language == "E":
+            filename = "TRR_E_Invitation_EN_S.mp4"
+        else:
+            filename = "TRR_E_Invitation_CN_S.mp4"
+        input_path = os.path.join(self.input_path, filename)  # Use os.path.join
+        input_video = VideoFileClip(input_path)
+        input_video_audio = input_video.audio
+        input_video_size = input_video.size
+        gen_name = self.generate_name(name, input_video_size)
+        table = self.generate_table_num(table_num, input_video_size)
+        final_video = CompositeVideoClip(
+            [input_video, gen_name, table], use_bgclip=True
+        )
+        final_video = final_video.set_audio(input_video_audio)
         output_name = self.generate_output_video_name(name, table_num)
-        self.output_video(final_video, output_name)
+        self.output_video(final_video, output_name, branch)
+        input_video.close()
 
     @time_decorator
     def process_videos(self, digital_cards: list[DigitalCard]):
@@ -106,7 +120,9 @@ class DigitalVideoBannerGenerator:
             id = card.get_id()
             name = card.get_name()
             table_no = card.get_table_number()
-            self.process_video(name, table_no, id)
+            language = card.get_language()
+            branch = card.get_branch()
+            self.process_video(name, table_no, language, branch, id)
 
 
 if __name__ == "__main__":

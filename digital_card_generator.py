@@ -1,15 +1,18 @@
 import csv
 
+
 class DigitalCard:
     """A simple class to represent a digital card."""
 
-    def __init__(self, id, name, table_number):
+    def __init__(self, id, name, table_number, language, branch):
         self.id = id
         self.name = name
         self.table_number = table_number
+        self.language = language
+        self.branch = branch
 
     def __repr__(self):
-        return f"DigitalCard(Id: {self.id}, Name: {self.name}, Table No: {self.table_number})"
+        return f"DigitalCard(Id: {self.id}, Name: {self.name}, Table No: {self.table_number}, Language: {self.language}, Branch: {self.table_number})"
 
     def get_id(self):
         return self.id
@@ -19,6 +22,12 @@ class DigitalCard:
 
     def get_table_number(self):
         return self.table_number
+
+    def get_language(self):
+        return self.language
+
+    def get_branch(self):
+        return self.branch
 
 
 class DigitalCardGenerator:
@@ -30,9 +39,15 @@ class DigitalCardGenerator:
         with open(self.csv_file_path, mode="r", newline="") as file:
             reader = csv.DictReader(file)
             for row in reader:
-                if int(row["Id"]) >= start_id:  # Start from specified ID
+                if int(row["id"]) >= start_id:  # Start from specified ID
                     self.cards.append(
-                        DigitalCard(row["Id"], row["Name"], row["Table No"])
+                        DigitalCard(
+                            row["id"],
+                            row["name"],
+                            row["table_no"],
+                            row["language"],
+                            row["branch"],
+                        )
                     )
 
     def get_digital_cards(self):
