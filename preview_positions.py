@@ -35,6 +35,7 @@ from config import (
     VIDEO_TABLE_PREFIX,
     VIDEO_TABLE_NUMBER_FORMAT,
     VIDEO_TABLE_PREFIX_SPACING,
+    VIDEO_TABLE_CASING,
     VIDEO_FONT_COLOR,
     VIDEO_NAME_POS_X,
     VIDEO_NAME_POS_Y,
@@ -157,6 +158,7 @@ def generate_preview_image(
     table_prefix = _r("VIDEO_TABLE_PREFIX", VIDEO_TABLE_PREFIX)
     table_number_fmt = _r("VIDEO_TABLE_NUMBER_FORMAT", VIDEO_TABLE_NUMBER_FORMAT)
     table_prefix_spacing = _r("VIDEO_TABLE_PREFIX_SPACING", VIDEO_TABLE_PREFIX_SPACING)
+    table_casing = _r("VIDEO_TABLE_CASING", VIDEO_TABLE_CASING)
     table_font_size = _r("VIDEO_TABLE_FONT_SIZE", VIDEO_TABLE_FONT_SIZE)
     font_color = _r("VIDEO_FONT_COLOR", VIDEO_FONT_COLOR)
     font_path = _r("FONT_PATH", FONT_PATH)
@@ -189,6 +191,12 @@ def generate_preview_image(
         draw_anchor_crosshair(draw, name_x, name_y)
 
     table_text = f"{table_prefix}{' ' * table_prefix_spacing}{_fmt_table_no(table_no, table_number_fmt)}"
+    if table_casing == "upper":
+        table_text = table_text.upper()
+    elif table_casing == "lower":
+        table_text = table_text.lower()
+    elif table_casing == "title":
+        table_text = table_text.title()
     table_font = ImageFont.truetype(font_path, table_font_size)
     tx0, ty0, tx1, ty1 = draw.textbbox((0, 0), table_text, font=table_font)
     table_w = tx1 - tx0

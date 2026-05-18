@@ -102,6 +102,10 @@ VIDEO_TABLE_NUMBER_FORMAT = "padded"
 # Number of spaces inserted between the prefix and the table number
 VIDEO_TABLE_PREFIX_SPACING = 1
 
+# Casing applied to the full table text (prefix + number) before rendering
+# Options: "title" (Title Case), "upper" (ALL CAPS), "lower" (all lowercase), "as-is" (no change)
+VIDEO_TABLE_CASING = "upper"
+
 # Casing applied to the attendee name before rendering
 # Options: "title" (Title Case), "upper" (ALL CAPS), "lower" (all lowercase), "as-is" (no change)
 VIDEO_NAME_CASING = "upper"

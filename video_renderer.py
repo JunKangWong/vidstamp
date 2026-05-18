@@ -18,6 +18,7 @@ from config import (
     VIDEO_TABLE_PREFIX,
     VIDEO_TABLE_NUMBER_FORMAT,
     VIDEO_TABLE_PREFIX_SPACING,
+    VIDEO_TABLE_CASING,
     VIDEO_FONT_COLOR,
     FONT_PATH,
     VIDEO_NAME_POS_X,
@@ -97,6 +98,13 @@ class DigitalVideoBannerGenerator:
 
     def generate_table_num(self, no):
         formatted_table_num = "{}{}{}".format(VIDEO_TABLE_PREFIX, " " * VIDEO_TABLE_PREFIX_SPACING, _fmt_table_no(no, VIDEO_TABLE_NUMBER_FORMAT))
+        casing = VIDEO_TABLE_CASING
+        if casing == "upper":
+            formatted_table_num = formatted_table_num.upper()
+        elif casing == "lower":
+            formatted_table_num = formatted_table_num.lower()
+        elif casing == "title":
+            formatted_table_num = formatted_table_num.title()
         table_no = TextClip(
             text=formatted_table_num,
             font_size=self.table_num_font_size,
