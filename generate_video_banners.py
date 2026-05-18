@@ -10,6 +10,7 @@ from config import (
     FONT_PATH,
     VIDEO_NAME_FONT_SIZE_MIN,
     VIDEO_NAME_MAX_WIDTH,
+    VIDEO_NAME_CASING,
 )
 
 
@@ -17,7 +18,15 @@ def _warn_overflow_names(cards) -> None:
     font = ImageFont.truetype(FONT_PATH, VIDEO_NAME_FONT_SIZE_MIN)
     overflows = []
     for card in cards:
-        name = card.get_name().title()
+        raw = card.get_name()
+        if VIDEO_NAME_CASING == "upper":
+            name = raw.upper()
+        elif VIDEO_NAME_CASING == "lower":
+            name = raw.lower()
+        elif VIDEO_NAME_CASING == "as-is":
+            name = raw
+        else:
+            name = raw.title()
         bbox = font.getbbox(name)
         if (bbox[2] - bbox[0]) > VIDEO_NAME_MAX_WIDTH:
             overflows.append((card.get_id(), name, bbox[2] - bbox[0]))

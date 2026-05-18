@@ -89,6 +89,23 @@ VIDEO_NAME_MAX_WIDTH = 900
 # Font size for the table number overlay
 VIDEO_TABLE_FONT_SIZE = 26
 
+# Prefix prepended to the table number value (e.g. "Table No: " → "Table No: K8")
+# Set to "" to render just the raw table number
+VIDEO_TABLE_PREFIX = "Table Number:"
+
+# How to format the table number value from the CSV
+# "as-is"  → show exactly as stored (e.g. "K8", "T1")
+# "number" → strip leading letters, show digits only (e.g. "8", "1")
+# "padded" → strip leading letters, zero-pad to 2 digits (e.g. "08", "01")
+VIDEO_TABLE_NUMBER_FORMAT = "padded"
+
+# Number of spaces inserted between the prefix and the table number
+VIDEO_TABLE_PREFIX_SPACING = 1
+
+# Casing applied to the attendee name before rendering
+# Options: "title" (Title Case), "upper" (ALL CAPS), "lower" (all lowercase), "as-is" (no change)
+VIDEO_NAME_CASING = "upper"
+
 # Text color for all overlays (name + table number)
 VIDEO_FONT_COLOR = "white"
 
@@ -98,13 +115,13 @@ VIDEO_FONT_COLOR = "white"
 VIDEO_NAME_POS_X = "center"
 
 # Vertical position of the name overlay (negative = offset up from bottom)
-VIDEO_NAME_POS_Y = 620
+VIDEO_NAME_POS_Y = 630
 
 # Horizontal position of the table number overlay
 VIDEO_TABLE_POS_X = "center"
 
 # Vertical position of the table number overlay (negative = offset up from bottom)
-VIDEO_TABLE_POS_Y = 690
+VIDEO_TABLE_POS_Y = 685
 
 # ─── Video Banner — Text Timing ───────────────────────────────────────────────
 

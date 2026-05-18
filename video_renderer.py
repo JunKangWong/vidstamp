@@ -13,7 +13,11 @@ from config import (
     VIDEO_NAME_FONT_SIZE_MIN,
     VIDEO_NAME_FONT_SIZE_STEP,
     VIDEO_NAME_MAX_WIDTH,
+    VIDEO_NAME_CASING,
     VIDEO_TABLE_FONT_SIZE,
+    VIDEO_TABLE_PREFIX,
+    VIDEO_TABLE_NUMBER_FORMAT,
+    VIDEO_TABLE_PREFIX_SPACING,
     VIDEO_FONT_COLOR,
     FONT_PATH,
     VIDEO_NAME_POS_X,
@@ -27,7 +31,16 @@ from config import (
     VIDEO_CN_FILENAME,
 )
 import os
+import re
 import time
+
+
+def _fmt_table_no(value: str, fmt: str) -> str:
+    if fmt == "as-is":
+        return value
+    m = re.search(r"\d+", value)
+    digits = m.group() if m else value
+    return digits.zfill(2) if fmt == "padded" else digits
 
 
 class DigitalVideoBannerGenerator:
@@ -60,7 +73,15 @@ class DigitalVideoBannerGenerator:
         return font_size
 
     def generate_name(self, name):
-        name = name.title()
+        casing = VIDEO_NAME_CASING
+        if casing == "upper":
+            name = name.upper()
+        elif casing == "lower":
+            name = name.lower()
+        elif casing == "as-is":
+            pass
+        else:
+            name = name.title()
         font_size = self._fit_font_size(name)
         name_text = TextClip(
             text=name,
@@ -75,7 +96,7 @@ class DigitalVideoBannerGenerator:
         return name_text
 
     def generate_table_num(self, no):
-        formatted_table_num = "Table No: {}".format(no)
+        formatted_table_num = "{}{}{}".format(VIDEO_TABLE_PREFIX, " " * VIDEO_TABLE_PREFIX_SPACING, _fmt_table_no(no, VIDEO_TABLE_NUMBER_FORMAT))
         table_no = TextClip(
             text=formatted_table_num,
             font_size=self.table_num_font_size,

@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import os
 import csv
+import re
 from PIL import Image, ImageDraw, ImageFont
 from moviepy import VideoFileClip
 from config import (
@@ -29,7 +30,11 @@ from config import (
     VIDEO_NAME_FONT_SIZE_MIN,
     VIDEO_NAME_FONT_SIZE_STEP,
     VIDEO_NAME_MAX_WIDTH,
+    VIDEO_NAME_CASING,
     VIDEO_TABLE_FONT_SIZE,
+    VIDEO_TABLE_PREFIX,
+    VIDEO_TABLE_NUMBER_FORMAT,
+    VIDEO_TABLE_PREFIX_SPACING,
     VIDEO_FONT_COLOR,
     VIDEO_NAME_POS_X,
     VIDEO_NAME_POS_Y,
@@ -42,6 +47,14 @@ from config import (
 PREVIEW_OUTPUT = "./output/preview.png"
 ANCHOR_MARK_COLOR = "red"
 ANCHOR_MARK_SIZE = 12
+
+
+def _fmt_table_no(value: str, fmt: str) -> str:
+    if fmt == "as-is":
+        return value
+    m = re.search(r"\d+", value)
+    digits = m.group() if m else value
+    return digits.zfill(2) if fmt == "padded" else digits
 
 
 def fit_name_font_size(name: str, font_path: str, max_size: int, min_size: int,
@@ -140,6 +153,10 @@ def generate_preview_image(
     name_size_min = _r("VIDEO_NAME_FONT_SIZE_MIN", VIDEO_NAME_FONT_SIZE_MIN)
     name_size_step = _r("VIDEO_NAME_FONT_SIZE_STEP", VIDEO_NAME_FONT_SIZE_STEP)
     name_max_width = _r("VIDEO_NAME_MAX_WIDTH", VIDEO_NAME_MAX_WIDTH)
+    name_casing = _r("VIDEO_NAME_CASING", VIDEO_NAME_CASING)
+    table_prefix = _r("VIDEO_TABLE_PREFIX", VIDEO_TABLE_PREFIX)
+    table_number_fmt = _r("VIDEO_TABLE_NUMBER_FORMAT", VIDEO_TABLE_NUMBER_FORMAT)
+    table_prefix_spacing = _r("VIDEO_TABLE_PREFIX_SPACING", VIDEO_TABLE_PREFIX_SPACING)
     table_font_size = _r("VIDEO_TABLE_FONT_SIZE", VIDEO_TABLE_FONT_SIZE)
     font_color = _r("VIDEO_FONT_COLOR", VIDEO_FONT_COLOR)
     font_path = _r("FONT_PATH", FONT_PATH)
@@ -152,7 +169,14 @@ def generate_preview_image(
     frame_w, frame_h = img.size
     draw = ImageDraw.Draw(img)
 
-    name_text = name.title()
+    if name_casing == "upper":
+        name_text = name.upper()
+    elif name_casing == "lower":
+        name_text = name.lower()
+    elif name_casing == "as-is":
+        name_text = name
+    else:
+        name_text = name.title()
     name_font_size = fit_name_font_size(
         name_text, font_path, name_size_max, name_size_min, name_size_step, name_max_width,
     )
@@ -164,7 +188,7 @@ def generate_preview_image(
     if draw_anchors:
         draw_anchor_crosshair(draw, name_x, name_y)
 
-    table_text = f"Table No: {table_no}"
+    table_text = f"{table_prefix}{' ' * table_prefix_spacing}{_fmt_table_no(table_no, table_number_fmt)}"
     table_font = ImageFont.truetype(font_path, table_font_size)
     tx0, ty0, tx1, ty1 = draw.textbbox((0, 0), table_text, font=table_font)
     table_w = tx1 - tx0

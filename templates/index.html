@@ -313,6 +313,19 @@
       </div>
 
       <div class="section">
+        <div class="section-title">Name Casing</div>
+        <div class="field">
+          <label>Style</label>
+          <select data-key="VIDEO_NAME_CASING">
+            <option value="title">Title Case</option>
+            <option value="upper">ALL CAPS</option>
+            <option value="lower">lowercase</option>
+            <option value="as-is">As-is (from CSV)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section">
         <div class="section-title">Font Sizes</div>
         <div class="field">
           <label>Name (max)</label>
@@ -325,6 +338,22 @@
         <div class="field">
           <label>Table</label>
           <input type="number" data-key="VIDEO_TABLE_FONT_SIZE" step="1" />
+        </div>
+        <div class="field">
+          <label>Table prefix</label>
+          <input type="text" data-key="VIDEO_TABLE_PREFIX" placeholder="Table No:" />
+        </div>
+        <div class="field">
+          <label>Prefix spacing</label>
+          <input type="number" data-key="VIDEO_TABLE_PREFIX_SPACING" step="1" min="0" />
+        </div>
+        <div class="field">
+          <label>Table number format</label>
+          <select data-key="VIDEO_TABLE_NUMBER_FORMAT">
+            <option value="padded">Zero-padded (01, 02…)</option>
+            <option value="number">Number only (1, 2…)</option>
+            <option value="as-is">As-is (T1, K8…)</option>
+          </select>
         </div>
       </div>
 
@@ -439,7 +468,7 @@ const VIDEO_KEYS = [
   "VIDEO_NAME_POS_X", "VIDEO_NAME_POS_Y",
   "VIDEO_TABLE_POS_X", "VIDEO_TABLE_POS_Y",
   "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MIN", "VIDEO_NAME_FONT_SIZE_STEP",
-  "VIDEO_NAME_MAX_WIDTH",
+  "VIDEO_NAME_MAX_WIDTH", "VIDEO_NAME_CASING", "VIDEO_TABLE_PREFIX", "VIDEO_TABLE_NUMBER_FORMAT", "VIDEO_TABLE_PREFIX_SPACING",
   "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR",
   "VIDEO_TEXT_ENTRANCE_TIME",
   "FONT_FILENAME",
