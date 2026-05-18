@@ -50,11 +50,9 @@ class DigitalVideoBannerProcessor:
         cardsGenerator = DigitalCardGenerator(input_path)
         try:
             with open(LAST_PROCESSED_ID_PATH, "r") as f:
-                start_id = int(f.read()) + 1
-        except FileNotFoundError:
+                start_id = int(f.read().strip()) + 1
+        except (FileNotFoundError, ValueError):
             start_id = 1
-            with open(LAST_PROCESSED_ID_PATH, "w") as f:
-                f.write(str(start_id))
 
         cardsGenerator.read_csv_and_generate_cards(start_id=start_id)
         return cardsGenerator.get_digital_cards()
