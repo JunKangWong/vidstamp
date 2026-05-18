@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Digital Card Config</title>
+<style>
+  :root {
+    --bg: #1a1d23;
+    --panel: #242832;
+    --panel-soft: #2d323f;
+    --accent: #6aa3ff;
+    --text: #e6e8eb;
+    --muted: #9aa3b0;
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --err: #f87171;
+    --border: #353a47;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+  header {
+    padding: 12px 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+  .tabs { display: flex; gap: 4px; }
+  .tab {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    background: var(--panel-soft);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .tab.active {
+    background: var(--accent);
+    color: #0a0d12;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  main {
+    display: grid;
+    grid-template-columns: minmax(340px, 35%) 1fr;
+    height: calc(100vh - 53px);
+  }
+  .controls {
+    overflow-y: auto;
+    padding: 20px;
+    border-right: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .preview-panel {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+  }
+  .preview-img-wrap {
+    flex: 1;
+    background: #0d0f13;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .preview-img-wrap img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .preview-placeholder {
+    color: var(--muted);
+    text-align: center;
+    padding: 40px;
+  }
+  .section {
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .field {
+    display: grid;
+    grid-template-columns: 130px 1fr 60px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .field label {
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .field input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+  .field input[type="number"],
+  .field input[type="text"],
+  .field select {
+    width: 100%;
+    padding: 5px 8px;
+    background: var(--panel-soft);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .field-full {
+    grid-template-columns: 130px 1fr;
+  }
+  details {
+    margin-bottom: 16px;
+  }
+  details summary {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  .save-row {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  button.primary {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    color: #0a0d12;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  button.primary:hover { filter: brightness(1.1); }
+  button.primary:disabled { opacity: 0.5; cursor: wait; }
+  .status-line {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    min-height: 16px;
+  }
+  .status-line.ok { color: var(--ok); }
+  .status-line.err { color: var(--err); }
+  .preview-status {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+  }
+  .preview-status .ok { color: var(--ok); }
+  .preview-status .updating { color: var(--warn); }
+  .sample-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Digital Card Config</h1>
+  <div class="tabs">
+    <button class="tab active" data-tab="video">Video Banner</button>
+    <button class="tab" data-tab="image">Image Card</button>
+  </div>
+</header>
+
+<main>
+  <div class="controls">
+
+    <!-- VIDEO TAB -->
+    <div class="tab-pane active" data-pane="video">
+
+      <div class="section">
+        <div class="section-title">Sample Text</div>
+        <div class="sample-inputs">
+          <input type="text" id="sample-name" placeholder="Name" value="Patricia Thomas" />
+          <input type="text" id="sample-table" placeholder="Table" value="T1" />
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Preview Frame</div>
+        <div class="field">
+          <label>Frame at (s)</label>
+          <input type="range" id="frame-time-slider" min="0" max="18" step="0.1" />
+          <input type="number" id="frame-time-input" step="0.1" />
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Positioning</div>
+        <div class="field">
+          <label>Name Y</label>
+          <input type="range" data-key="VIDEO_NAME_POS_Y" data-pair="VIDEO_NAME_POS_Y_n" min="-600" max="600" />
+          <input type="number" id="VIDEO_NAME_POS_Y_n" data-key="VIDEO_NAME_POS_Y" data-pair="VIDEO_NAME_POS_Y" />
+        </div>
+        <div class="field">
+          <label>Table Y</label>
+          <input type="range" data-key="VIDEO_TABLE_POS_Y" data-pair="VIDEO_TABLE_POS_Y_n" min="-600" max="600" />
+          <input type="number" id="VIDEO_TABLE_POS_Y_n" data-key="VIDEO_TABLE_POS_Y" data-pair="VIDEO_TABLE_POS_Y" />
+        </div>
+        <div class="field field-full">
+          <label>Name X</label>
+          <input type="text" data-key="VIDEO_NAME_POS_X" placeholder="center or pixel offset" />
+        </div>
+        <div class="field field-full">
+          <label>Table X</label>
+          <input type="text" data-key="VIDEO_TABLE_POS_X" placeholder="center or pixel offset" />
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Font Sizes</div>
+        <div class="field">
+          <label>Name (large)</label>
+          <input type="range" data-key="VIDEO_NAME_FONT_SIZE" data-pair="VIDEO_NAME_FONT_SIZE_n" min="10" max="200" />
+          <input type="number" id="VIDEO_NAME_FONT_SIZE_n" data-key="VIDEO_NAME_FONT_SIZE" data-pair="VIDEO_NAME_FONT_SIZE" />
+        </div>
+        <div class="field">
+          <label>Name (medium)</label>
+          <input type="range" data-key="VIDEO_NAME_FONT_SIZE_MEDIUM" data-pair="VIDEO_NAME_FONT_SIZE_MEDIUM_n" min="10" max="200" />
+          <input type="number" id="VIDEO_NAME_FONT_SIZE_MEDIUM_n" data-key="VIDEO_NAME_FONT_SIZE_MEDIUM" data-pair="VIDEO_NAME_FONT_SIZE_MEDIUM" />
+        </div>
+        <div class="field">
+          <label>Name (small)</label>
+          <input type="range" data-key="VIDEO_NAME_FONT_SIZE_SMALL" data-pair="VIDEO_NAME_FONT_SIZE_SMALL_n" min="10" max="200" />
+          <input type="number" id="VIDEO_NAME_FONT_SIZE_SMALL_n" data-key="VIDEO_NAME_FONT_SIZE_SMALL" data-pair="VIDEO_NAME_FONT_SIZE_SMALL" />
+        </div>
+        <div class="field">
+          <label>Table</label>
+          <input type="range" data-key="VIDEO_TABLE_FONT_SIZE" data-pair="VIDEO_TABLE_FONT_SIZE_n" min="10" max="120" />
+          <input type="number" id="VIDEO_TABLE_FONT_SIZE_n" data-key="VIDEO_TABLE_FONT_SIZE" data-pair="VIDEO_TABLE_FONT_SIZE" />
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Font Color</div>
+        <div class="field field-full">
+          <label>Color</label>
+          <input type="text" data-key="VIDEO_FONT_COLOR" placeholder="black, white, #aa8800…" />
+        </div>
+      </div>
+
+      <details>
+        <summary>Adaptive size thresholds</summary>
+        <div class="field field-full">
+          <label>Medium @ len &gt;</label>
+          <input type="number" data-key="VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD" />
+        </div>
+        <div class="field field-full">
+          <label>Small @ len &gt;</label>
+          <input type="number" data-key="VIDEO_NAME_LENGTH_LONG_THRESHOLD" />
+        </div>
+      </details>
+    </div>
+
+    <!-- IMAGE TAB -->
+    <div class="tab-pane" data-pane="image">
+      <div class="section">
+        <div class="section-title">Image Card — Positioning</div>
+        <div class="field field-full">
+          <label>Name Y</label>
+          <input type="number" data-key="IMAGE_NAME_Y" />
+        </div>
+        <div class="field field-full">
+          <label>Table Y</label>
+          <input type="number" data-key="IMAGE_TABLE_Y" />
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Image Card — Font Sizes</div>
+        <div class="field field-full">
+          <label>Name</label>
+          <input type="number" data-key="IMAGE_NAME_FONT_SIZE" />
+        </div>
+        <div class="field field-full">
+          <label>Table</label>
+          <input type="number" data-key="IMAGE_TABLE_FONT_SIZE" />
+        </div>
+      </div>
+      <p style="color: var(--muted); font-size: 12px;">
+        Image card preview is not live — adjust values and Save to commit.
+      </p>
+    </div>
+
+    <div class="save-row">
+      <button class="primary" id="save-btn">Save to config.py</button>
+      <div class="status-line" id="save-status">All previews are in-memory until you click Save.</div>
+    </div>
+  </div>
+
+  <div class="preview-panel">
+    <div class="preview-status">
+      <span>Live preview</span>
+      <span id="preview-status">Loading…</span>
+    </div>
+    <div class="preview-img-wrap">
+      <div class="preview-placeholder" id="preview-placeholder">Initialising…</div>
+      <img id="preview-img" style="display: none;" alt="Preview" />
+    </div>
+  </div>
+</main>
+
+<script>
+const VIDEO_KEYS = [
+  "VIDEO_NAME_POS_X", "VIDEO_NAME_POS_Y",
+  "VIDEO_TABLE_POS_X", "VIDEO_TABLE_POS_Y",
+  "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MEDIUM", "VIDEO_NAME_FONT_SIZE_SMALL",
+  "VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD", "VIDEO_NAME_LENGTH_LONG_THRESHOLD",
+  "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR",
+];
+const IMAGE_KEYS = [
+  "IMAGE_NAME_Y", "IMAGE_TABLE_Y",
+  "IMAGE_NAME_FONT_SIZE", "IMAGE_TABLE_FONT_SIZE",
+];
+const ALL_KEYS = [...VIDEO_KEYS, ...IMAGE_KEYS];
+
+let debounceTimer = null;
+let lastObjectURL = null;
+let currentValues = {};
+
+const previewImg = document.getElementById("preview-img");
+const previewPlaceholder = document.getElementById("preview-placeholder");
+const previewStatus = document.getElementById("preview-status");
+const saveStatus = document.getElementById("save-status");
+const saveBtn = document.getElementById("save-btn");
+
+function getInputsForKey(key) {
+  return document.querySelectorAll(`[data-key="${key}"]`);
+}
+
+function setKeyValue(key, value) {
+  currentValues[key] = value;
+  getInputsForKey(key).forEach(el => {
+    if (el.type === "range" || el.type === "number") {
+      el.value = (value === "center") ? "" : value;
+    } else {
+      el.value = value;
+    }
+  });
+}
+
+function readKeyValue(key) {
+  const inputs = getInputsForKey(key);
+  if (inputs.length === 0) return currentValues[key];
+  const el = inputs[0];
+  if (el.type === "number") {
+    if (el.value === "") return currentValues[key];
+    const n = Number(el.value);
+    return Number.isNaN(n) ? el.value : n;
+  }
+  if (el.type === "range") {
+    return Number(el.value);
+  }
+  // text input: keep "center" as string, parse integers
+  const v = el.value.trim();
+  if (v === "" || v.toLowerCase() === "center") return v.toLowerCase() === "center" ? "center" : currentValues[key];
+  const n = Number(v);
+  return Number.isNaN(n) ? v : n;
+}
+
+function collectOverrides() {
+  const out = {};
+  ALL_KEYS.forEach(key => {
+    const v = readKeyValue(key);
+    if (v !== undefined && v !== null && v !== "") out[key] = v;
+  });
+  return out;
+}
+
+async function fetchPreview() {
+  const name = document.getElementById("sample-name").value || "Sample Name";
+  const table_no = document.getElementById("sample-table").value || "T1";
+  const at_time = parseFloat(document.getElementById("frame-time-input").value) || null;
+  const overrides = collectOverrides();
+
+  previewStatus.textContent = "Updating…";
+  previewStatus.className = "updating";
+
+  try {
+    const res = await fetch("/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, table_no, at_time, overrides }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    previewImg.src = url;
+    previewImg.style.display = "block";
+    previewPlaceholder.style.display = "none";
+    if (lastObjectURL) URL.revokeObjectURL(lastObjectURL);
+    lastObjectURL = url;
+    previewStatus.textContent = "Ready · " + new Date().toLocaleTimeString();
+    previewStatus.className = "ok";
+  } catch (e) {
+    previewStatus.textContent = "Error: " + e.message;
+    previewStatus.className = "err";
+  }
+}
+
+function schedulePreview() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(fetchPreview, 300);
+}
+
+function wirePairedInputs() {
+  // sync range <-> number pairs
+  document.querySelectorAll("[data-pair]").forEach(el => {
+    el.addEventListener("input", () => {
+      const pairId = el.dataset.pair;
+      const partner = document.getElementById(pairId)
+        || document.querySelector(`[data-pair="${el.id || el.dataset.key + '_n'}"]`);
+      // Find sibling via shared data-key
+      const siblings = getInputsForKey(el.dataset.key);
+      siblings.forEach(s => {
+        if (s !== el) s.value = el.value;
+      });
+    });
+  });
+}
+
+function wireLiveUpdates() {
+  // every input change triggers a debounced preview
+  document.querySelectorAll("input").forEach(el => {
+    el.addEventListener("input", schedulePreview);
+  });
+}
+
+function wireTabs() {
+  document.querySelectorAll(".tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelector(`.tab-pane[data-pane="${btn.dataset.tab}"]`).classList.add("active");
+    });
+  });
+}
+
+async function saveConfig() {
+  saveBtn.disabled = true;
+  saveStatus.textContent = "Saving…";
+  saveStatus.className = "status-line";
+
+  const payload = {};
+  ALL_KEYS.forEach(key => {
+    const v = readKeyValue(key);
+    if (v !== undefined && v !== null && v !== "") payload[key] = v;
+  });
+
+  try {
+    const res = await fetch("/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.status === "ok") {
+      saveStatus.textContent = "Saved · Backup: " + data.backup;
+      saveStatus.className = "status-line ok";
+    } else {
+      saveStatus.textContent = "Save failed: " + (data.message || "unknown error");
+      saveStatus.className = "status-line err";
+    }
+  } catch (e) {
+    saveStatus.textContent = "Save failed: " + e.message;
+    saveStatus.className = "status-line err";
+  } finally {
+    saveBtn.disabled = false;
+  }
+}
+
+async function init() {
+  wireTabs();
+  wirePairedInputs();
+  wireLiveUpdates();
+  saveBtn.addEventListener("click", saveConfig);
+
+  try {
+    const res = await fetch("/config");
+    const data = await res.json();
+    Object.entries(data).forEach(([k, v]) => {
+      if (!k.startsWith("_")) setKeyValue(k, v);
+    });
+    // Initialize frame-time controls from server metadata
+    const duration = data._video_duration || 18;
+    const defaultAt = data._default_at_time || 1.5;
+    const slider = document.getElementById("frame-time-slider");
+    const input = document.getElementById("frame-time-input");
+    slider.max = Math.max(duration - 0.1, 1).toFixed(1);
+    input.max = slider.max;
+    input.min = 0;
+    slider.value = defaultAt.toFixed(2);
+    input.value = defaultAt.toFixed(2);
+    // Keep the pair in sync
+    slider.addEventListener("input", () => { input.value = slider.value; });
+    input.addEventListener("input", () => { slider.value = input.value; });
+  } catch (e) {
+    saveStatus.textContent = "Could not load config: " + e.message;
+    saveStatus.className = "status-line err";
+    return;
+  }
+  fetchPreview();
+}
+
+init();
+</script>
+
+</body>
+</html>
