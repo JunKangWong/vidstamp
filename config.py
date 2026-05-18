@@ -34,6 +34,12 @@ LOG_DIR = str(_HERE / "output" / "log")
 LOG_FILE_PATH = os.path.join(LOG_DIR, "digital_video_banner.log")
 LAST_PROCESSED_ID_PATH = os.path.join(LOG_DIR, "last_processed_id.txt")
 
+# Pause sentinel file — create this file to pause generation before the next video
+PAUSE_FILE_PATH = os.path.join(LOG_DIR, "PAUSE")
+
+# JSON file updated after each video with progress info (total, done, percentage, ETA)
+PROGRESS_FILE_PATH = os.path.join(LOG_DIR, "progress.json")
+
 # Source video filenames — must exist inside VIDEO_INPUT_PATH
 # Set both to the same file if there is no language distinction
 VIDEO_EN_FILENAME = "INVITATIONC FINAL ADD NAME.mp4"  # Used when language == "E"
@@ -82,7 +88,7 @@ VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD = 25
 VIDEO_NAME_LENGTH_LONG_THRESHOLD = 35
 
 # Font size for the table number overlay
-VIDEO_TABLE_FONT_SIZE = 28
+VIDEO_TABLE_FONT_SIZE = 26
 
 # Text color for all overlays (name + table number)
 VIDEO_FONT_COLOR = "white"

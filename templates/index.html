@@ -193,6 +193,44 @@
   }
   button.run-btn:hover { filter: brightness(1.15); }
   button.run-btn:disabled { opacity: 0.5; cursor: wait; }
+  button.ctrl-btn {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel-soft);
+    color: var(--text);
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button.ctrl-btn:hover { filter: brightness(1.15); }
+  button.ctrl-btn:disabled { opacity: 0.4; cursor: default; }
+  button.ctrl-btn.pause { border-color: var(--warn); color: var(--warn); }
+  button.ctrl-btn.resume { border-color: var(--ok); color: var(--ok); }
+  .ctrl-row { display: flex; gap: 8px; margin-top: 8px; }
+  .progress-wrap {
+    margin-top: 10px;
+    background: var(--panel-soft);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+    display: none;
+  }
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+    min-height: 16px;
+    display: none;
+  }
   .log-panel {
     border-top: 1px solid var(--border);
     padding-top: 10px;
@@ -325,6 +363,14 @@
           <input type="text" id="video-output-path" data-key="VIDEO_OUTPUT_PATH" placeholder="./output/digital_video_banner" />
         </div>
         <button class="run-btn" id="run-video-btn">Generate Videos</button>
+        <div class="ctrl-row">
+          <button class="ctrl-btn pause" id="pause-btn" disabled>Pause</button>
+          <button class="ctrl-btn resume" id="resume-btn" disabled>Resume</button>
+        </div>
+        <div class="progress-wrap" id="progress-wrap">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="progress-label" id="progress-label"></div>
       </div>
     </div>
 
@@ -510,6 +556,7 @@ function wireLiveUpdates() {
 }
 
 let _pollTimer = null;
+let _progressTimer = null;
 let _currentJobId = null;
 
 async function loadInputs(videoCsvHint, imageCsvHint) {
@@ -529,6 +576,42 @@ async function loadInputs(videoCsvHint, imageCsvHint) {
   });
 }
 
+function fmtEta(secs) {
+  if (secs == null) return "";
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  if (h > 0) return `~${h}h ${m}m left`;
+  if (m > 0) return `~${m}m ${s}s left`;
+  return `~${s}s left`;
+}
+
+async function _pollProgress() {
+  try {
+    const res = await fetch("/progress");
+    if (!res.ok) return;
+    const p = await res.json();
+    if (!p || p.total == null) return;
+
+    const wrap = document.getElementById("progress-wrap");
+    const bar = document.getElementById("progress-bar");
+    const label = document.getElementById("progress-label");
+    wrap.style.display = "block";
+    label.style.display = "block";
+    bar.style.width = p.percentage + "%";
+
+    let text = `${p.done} / ${p.total} (${p.percentage}%)`;
+    if (p.current_name) text += ` — ${p.current_name}`;
+    if (p.eta_seconds != null) text += `  ${fmtEta(p.eta_seconds)}`;
+    if (p.paused) text += "  ⏸ Paused";
+    label.textContent = text;
+  } catch (_) {}
+}
+
+function _stopProgressPoll() {
+  if (_progressTimer) { clearInterval(_progressTimer); _progressTimer = null; }
+}
+
 async function runJob(type) {
   const csvSel = document.getElementById(`${type}-csv-select`);
   const outputEl = document.getElementById(`${type}-output-path`);
@@ -544,7 +627,10 @@ async function runJob(type) {
   badge.className = "updating";
 
   const runBtn = document.getElementById(`run-${type}-btn`);
+  const pauseBtn = document.getElementById("pause-btn");
+  const resumeBtn = document.getElementById("resume-btn");
   runBtn.disabled = true;
+  if (type === "video") { pauseBtn.disabled = false; resumeBtn.disabled = false; }
 
   try {
     const res = await fetch("/run", {
@@ -553,13 +639,16 @@ async function runJob(type) {
       body: JSON.stringify({ type, csv, output: outputEl.value.trim() }),
     });
     const data = await res.json();
-    if (data.error) { badge.textContent = "Error: " + data.error; badge.className = "err"; runBtn.disabled = false; return; }
+    if (data.error) { badge.textContent = "Error: " + data.error; badge.className = "err"; runBtn.disabled = false; pauseBtn.disabled = true; resumeBtn.disabled = true; return; }
     _currentJobId = data.job_id;
     _pollTimer = setInterval(() => _pollJob(type), 1000);
+    if (type === "video") _progressTimer = setInterval(_pollProgress, 1000);
   } catch (e) {
     badge.textContent = "Error: " + e.message;
     badge.className = "err";
     runBtn.disabled = false;
+    pauseBtn.disabled = true;
+    resumeBtn.disabled = true;
   }
 }
 
@@ -582,7 +671,11 @@ async function _pollJob(type) {
     clearInterval(_pollTimer);
     _pollTimer = null;
     _currentJobId = null;
+    _stopProgressPoll();
     document.getElementById(`run-${type}-btn`).disabled = false;
+    document.getElementById("pause-btn").disabled = true;
+    document.getElementById("resume-btn").disabled = true;
+    _pollProgress(); // final progress update
   }
 }
 
@@ -651,6 +744,14 @@ async function init() {
   saveBtn.addEventListener("click", saveConfig);
   document.getElementById("run-video-btn").addEventListener("click", () => runJob("video"));
   document.getElementById("run-image-btn").addEventListener("click", () => runJob("image"));
+  document.getElementById("pause-btn").addEventListener("click", async () => {
+    await fetch("/pause", { method: "POST" });
+  });
+  document.getElementById("resume-btn").addEventListener("click", async () => {
+    await fetch("/resume", { method: "POST" });
+  });
+  // Show progress if a previous run left state behind
+  _pollProgress();
 
   let videoCsvHint = "", imageCsvHint = "";
   try {

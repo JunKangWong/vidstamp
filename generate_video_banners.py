@@ -1,6 +1,7 @@
 import argparse
 from card_model import DigitalCardGenerator
 from video_renderer import DigitalVideoBannerGenerator
+from progress_tracker import ProgressTracker
 from config import VIDEO_CSV_PATH, VIDEO_OUTPUT_PATH, LAST_PROCESSED_ID_PATH
 
 
@@ -23,7 +24,8 @@ class DigitalVideoBannerProcessor:
 
     def generate_digital_banner(self, output_path=None):
         bannerGenerator = DigitalVideoBannerGenerator(output_path=output_path)
-        bannerGenerator.process_videos(self.digital_cards)
+        tracker = ProgressTracker(total=len(self.digital_cards))
+        bannerGenerator.process_videos(self.digital_cards, progress_tracker=tracker)
 
 
 if __name__ == "__main__":

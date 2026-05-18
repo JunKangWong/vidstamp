@@ -32,6 +32,7 @@ from PIL import Image
 
 import config
 from preview_positions import generate_preview_image
+from progress_tracker import ProgressTracker
 
 # Fields exposed in the UI (everything else in config.py stays manually edited).
 UI_KEYS = [
@@ -306,6 +307,28 @@ def poll_run(job_id):
     if not job:
         return jsonify({"error": "job not found"}), 404
     return jsonify(job)
+
+
+@app.route("/progress")
+def get_progress():
+    try:
+        with open(config.PROGRESS_FILE_PATH) as f:
+            import json
+            return jsonify(json.load(f))
+    except FileNotFoundError:
+        return jsonify({})
+
+
+@app.route("/pause", methods=["POST"])
+def pause_run():
+    ProgressTracker.pause()
+    return jsonify({"status": "paused"})
+
+
+@app.route("/resume", methods=["POST"])
+def resume_run():
+    ProgressTracker.resume()
+    return jsonify({"status": "resumed"})
 
 
 def main():

@@ -27,6 +27,7 @@ from config import (
     VIDEO_CN_FILENAME,
 )
 import os
+import time
 
 
 class DigitalVideoBannerGenerator:
@@ -116,14 +117,23 @@ class DigitalVideoBannerGenerator:
         input_video.close()
 
     @time_decorator
-    def process_videos(self, digital_cards: list[DigitalCard]):
+    def process_videos(self, digital_cards: list[DigitalCard], progress_tracker=None):
         for card in digital_cards:
+            while progress_tracker and progress_tracker.is_paused():
+                time.sleep(1)
+
             id = card.get_id()
             name = card.get_name()
             table_no = card.get_table_number()
             language = card.get_language()
             branch = card.get_branch()
+
+            start = time.time()
             self.process_video(name, table_no, language, branch, id)
+            elapsed = time.time() - start
+
+            if progress_tracker:
+                progress_tracker.update(id, name, elapsed)
 
 
 if __name__ == "__main__":
