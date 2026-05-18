@@ -1,30 +1,33 @@
 import os
+from pathlib import Path
+
+_HERE = Path(__file__).parent
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
 
 # Input CSV for image card generation
-IMAGE_CSV_PATH = "./input/sample_namelist.csv"
+IMAGE_CSV_PATH = str(_HERE / "input" / "sample_namelist.csv")
 
 # Input CSV for video banner generation
-VIDEO_CSV_PATH = "./input/trr_invitation_batch_1.csv"
+VIDEO_CSV_PATH = str(_HERE / "input" / "trr_invitation_batch_1.csv")
 
 # Image template drawn on for each card
-IMAGE_TEMPLATE_PATH = "./template/trr_invitation.png"
+IMAGE_TEMPLATE_PATH = str(_HERE / "template" / "trr_invitation.png")
 
 # Font file used for both image cards and video overlays
-FONT_PATH = "./font/baskvill/BASKVILL.ttf"
+FONT_PATH = str(_HERE / "font" / "biondi" / "biondi-sans-bd-AF65ded4d8b78fb.otf")
 
 # Output ZIP that bundles all generated image cards
-IMAGE_OUTPUT_ZIP_PATH = "./output/digital_cards.zip"
+IMAGE_OUTPUT_ZIP_PATH = str(_HERE / "output" / "digital_cards.zip")
 
 # Directory where source MP4 video files are located
-VIDEO_INPUT_PATH = "./template"
+VIDEO_INPUT_PATH = str(_HERE / "template")
 
 # Root output directory for generated video banners (one subfolder per branch)
-VIDEO_OUTPUT_PATH = "./output/digital_video_banner"
+VIDEO_OUTPUT_PATH = str(_HERE / "output" / "digital_video_banner")
 
 # Directory for log files and resume state
-LOG_DIR = "./output/log"
+LOG_DIR = str(_HERE / "output" / "log")
 
 # Derived log file paths — change LOG_DIR above to relocate both
 LOG_FILE_PATH = os.path.join(LOG_DIR, "digital_video_banner.log")
@@ -89,13 +92,13 @@ VIDEO_FONT_COLOR = "black"
 VIDEO_NAME_POS_X = "center"
 
 # Vertical position of the name overlay (negative = offset up from bottom)
-VIDEO_NAME_POS_Y = -230
+VIDEO_NAME_POS_Y = 620
 
 # Horizontal position of the table number overlay
 VIDEO_TABLE_POS_X = "center"
 
 # Vertical position of the table number overlay (negative = offset up from bottom)
-VIDEO_TABLE_POS_Y = -176
+VIDEO_TABLE_POS_Y = 690
 
 # ─── Video Banner — Text Timing ───────────────────────────────────────────────
 
