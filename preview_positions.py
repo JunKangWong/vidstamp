@@ -26,10 +26,9 @@ from config import (
     VIDEO_CN_FILENAME,
     FONT_PATH,
     VIDEO_NAME_FONT_SIZE,
-    VIDEO_NAME_FONT_SIZE_MEDIUM,
-    VIDEO_NAME_FONT_SIZE_SMALL,
-    VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD,
-    VIDEO_NAME_LENGTH_LONG_THRESHOLD,
+    VIDEO_NAME_FONT_SIZE_MIN,
+    VIDEO_NAME_FONT_SIZE_STEP,
+    VIDEO_NAME_MAX_WIDTH,
     VIDEO_TABLE_FONT_SIZE,
     VIDEO_FONT_COLOR,
     VIDEO_NAME_POS_X,
@@ -45,14 +44,17 @@ ANCHOR_MARK_COLOR = "red"
 ANCHOR_MARK_SIZE = 12
 
 
-def pick_name_font_size(name: str, large: int, medium: int, small: int,
-                        medium_threshold: int, long_threshold: int) -> int:
-    """Mirror the adaptive sizing in video_renderer.generate_name."""
-    if len(name) > long_threshold:
-        return small
-    if len(name) > medium_threshold:
-        return medium
-    return large
+def fit_name_font_size(name: str, font_path: str, max_size: int, min_size: int,
+                       step: int, max_width: int) -> int:
+    """Mirror the pixel-width fitting in video_renderer._fit_font_size."""
+    font_size = max_size
+    while font_size > min_size:
+        font = ImageFont.truetype(font_path, font_size)
+        bbox = font.getbbox(name)
+        if (bbox[2] - bbox[0]) <= max_width:
+            break
+        font_size -= step
+    return font_size
 
 
 def resolve_position(pos_x, pos_y, text_w: int, frame_w: int, frame_h: int):
@@ -134,11 +136,10 @@ def generate_preview_image(
     name_pos_y = _r("VIDEO_NAME_POS_Y", VIDEO_NAME_POS_Y)
     table_pos_x = _r("VIDEO_TABLE_POS_X", VIDEO_TABLE_POS_X)
     table_pos_y = _r("VIDEO_TABLE_POS_Y", VIDEO_TABLE_POS_Y)
-    name_size_large = _r("VIDEO_NAME_FONT_SIZE", VIDEO_NAME_FONT_SIZE)
-    name_size_medium = _r("VIDEO_NAME_FONT_SIZE_MEDIUM", VIDEO_NAME_FONT_SIZE_MEDIUM)
-    name_size_small = _r("VIDEO_NAME_FONT_SIZE_SMALL", VIDEO_NAME_FONT_SIZE_SMALL)
-    medium_threshold = _r("VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD", VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD)
-    long_threshold = _r("VIDEO_NAME_LENGTH_LONG_THRESHOLD", VIDEO_NAME_LENGTH_LONG_THRESHOLD)
+    name_size_max = _r("VIDEO_NAME_FONT_SIZE", VIDEO_NAME_FONT_SIZE)
+    name_size_min = _r("VIDEO_NAME_FONT_SIZE_MIN", VIDEO_NAME_FONT_SIZE_MIN)
+    name_size_step = _r("VIDEO_NAME_FONT_SIZE_STEP", VIDEO_NAME_FONT_SIZE_STEP)
+    name_max_width = _r("VIDEO_NAME_MAX_WIDTH", VIDEO_NAME_MAX_WIDTH)
     table_font_size = _r("VIDEO_TABLE_FONT_SIZE", VIDEO_TABLE_FONT_SIZE)
     font_color = _r("VIDEO_FONT_COLOR", VIDEO_FONT_COLOR)
     font_path = _r("FONT_PATH", FONT_PATH)
@@ -152,9 +153,8 @@ def generate_preview_image(
     draw = ImageDraw.Draw(img)
 
     name_text = name.title()
-    name_font_size = pick_name_font_size(
-        name_text, name_size_large, name_size_medium, name_size_small,
-        medium_threshold, long_threshold,
+    name_font_size = fit_name_font_size(
+        name_text, font_path, name_size_max, name_size_min, name_size_step, name_max_width,
     )
     name_font = ImageFont.truetype(font_path, name_font_size)
     nx0, ny0, nx1, ny1 = draw.textbbox((0, 0), name_text, font=name_font)

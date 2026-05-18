@@ -1,5 +1,6 @@
 from moviepy import VideoFileClip, TextClip, CompositeVideoClip
 from moviepy.video.fx import CrossFadeIn
+from PIL import ImageFont
 from card_model import DigitalCard
 from logging_utils import time_decorator, log_execution_time_with_details
 from config import (
@@ -9,10 +10,9 @@ from config import (
     VIDEO_AUDIO_CODEC,
     VIDEO_BITRATE,
     VIDEO_NAME_FONT_SIZE,
-    VIDEO_NAME_FONT_SIZE_MEDIUM,
-    VIDEO_NAME_FONT_SIZE_SMALL,
-    VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD,
-    VIDEO_NAME_LENGTH_LONG_THRESHOLD,
+    VIDEO_NAME_FONT_SIZE_MIN,
+    VIDEO_NAME_FONT_SIZE_STEP,
+    VIDEO_NAME_MAX_WIDTH,
     VIDEO_TABLE_FONT_SIZE,
     VIDEO_FONT_COLOR,
     FONT_PATH,
@@ -49,14 +49,19 @@ class DigitalVideoBannerGenerator:
         self.text_fade_duration = VIDEO_TEXT_FADE_DURATION
         self.text_entrance_time = VIDEO_TEXT_ENTRANCE_TIME
 
+    def _fit_font_size(self, name: str) -> int:
+        font_size = VIDEO_NAME_FONT_SIZE
+        while font_size > VIDEO_NAME_FONT_SIZE_MIN:
+            font = ImageFont.truetype(self.font, font_size)
+            bbox = font.getbbox(name)
+            if (bbox[2] - bbox[0]) <= VIDEO_NAME_MAX_WIDTH:
+                break
+            font_size -= VIDEO_NAME_FONT_SIZE_STEP
+        return font_size
+
     def generate_name(self, name):
-        size = len(name)
-        font_size = self.name_font_size
-        if size > VIDEO_NAME_LENGTH_LONG_THRESHOLD:
-            font_size = VIDEO_NAME_FONT_SIZE_SMALL
-        elif size > VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD:
-            font_size = VIDEO_NAME_FONT_SIZE_MEDIUM
         name = name.title()
+        font_size = self._fit_font_size(name)
         name_text = TextClip(
             text=name,
             font_size=font_size,

@@ -72,20 +72,19 @@ VIDEO_BITRATE = "5000k"
 
 # ─── Video Banner — Text & Font ───────────────────────────────────────────────
 
-# Default font size for the attendee name overlay
+# Default (maximum) font size for the attendee name overlay
 VIDEO_NAME_FONT_SIZE = 48
 
-# Font size used when name length exceeds VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD
-VIDEO_NAME_FONT_SIZE_MEDIUM = 45
+# Minimum font size — name is rendered at this size if it still overflows
+VIDEO_NAME_FONT_SIZE_MIN = 24
 
-# Font size used when name length exceeds VIDEO_NAME_LENGTH_LONG_THRESHOLD
-VIDEO_NAME_FONT_SIZE_SMALL = 30
+# Points to reduce font size by on each fitting iteration
+VIDEO_NAME_FONT_SIZE_STEP = 2
 
-# Character count above which medium font size kicks in
-VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD = 25
-
-# Character count above which small font size kicks in
-VIDEO_NAME_LENGTH_LONG_THRESHOLD = 35
+# Maximum pixel width for the rendered name; names wider than this are shrunk
+# until they fit (or until VIDEO_NAME_FONT_SIZE_MIN is reached).
+# Frame width is 1080px; 900px leaves ~90px margin on each side.
+VIDEO_NAME_MAX_WIDTH = 900
 
 # Font size for the table number overlay
 VIDEO_TABLE_FONT_SIZE = 26
@@ -116,4 +115,4 @@ VIDEO_TEXT_DURATION = 15.0
 VIDEO_TEXT_FADE_DURATION = 1
 
 # Delay (seconds) before text overlays appear after the video starts
-VIDEO_TEXT_ENTRANCE_TIME = 5.0
+VIDEO_TEXT_ENTRANCE_TIME = 4.5

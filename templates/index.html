@@ -315,16 +315,12 @@
       <div class="section">
         <div class="section-title">Font Sizes</div>
         <div class="field">
-          <label>Name (large)</label>
+          <label>Name (max)</label>
           <input type="number" data-key="VIDEO_NAME_FONT_SIZE" step="1" />
         </div>
         <div class="field">
-          <label>Name (medium)</label>
-          <input type="number" data-key="VIDEO_NAME_FONT_SIZE_MEDIUM" step="1" />
-        </div>
-        <div class="field">
-          <label>Name (small)</label>
-          <input type="number" data-key="VIDEO_NAME_FONT_SIZE_SMALL" step="1" />
+          <label>Name (min)</label>
+          <input type="number" data-key="VIDEO_NAME_FONT_SIZE_MIN" step="1" />
         </div>
         <div class="field">
           <label>Table</label>
@@ -341,14 +337,14 @@
       </div>
 
       <details>
-        <summary>Adaptive size thresholds</summary>
+        <summary>Name width fitting</summary>
         <div class="field">
-          <label>Medium @ len &gt;</label>
-          <input type="number" data-key="VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD" step="1" />
+          <label>Max width (px)</label>
+          <input type="number" data-key="VIDEO_NAME_MAX_WIDTH" step="10" />
         </div>
         <div class="field">
-          <label>Small @ len &gt;</label>
-          <input type="number" data-key="VIDEO_NAME_LENGTH_LONG_THRESHOLD" step="1" />
+          <label>Step (pt)</label>
+          <input type="number" data-key="VIDEO_NAME_FONT_SIZE_STEP" step="1" />
         </div>
       </details>
 
@@ -442,8 +438,8 @@
 const VIDEO_KEYS = [
   "VIDEO_NAME_POS_X", "VIDEO_NAME_POS_Y",
   "VIDEO_TABLE_POS_X", "VIDEO_TABLE_POS_Y",
-  "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MEDIUM", "VIDEO_NAME_FONT_SIZE_SMALL",
-  "VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD", "VIDEO_NAME_LENGTH_LONG_THRESHOLD",
+  "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MIN", "VIDEO_NAME_FONT_SIZE_STEP",
+  "VIDEO_NAME_MAX_WIDTH",
   "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR",
   "VIDEO_TEXT_ENTRANCE_TIME",
   "FONT_FILENAME",

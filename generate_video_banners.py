@@ -1,13 +1,41 @@
 import argparse
+from PIL import ImageFont
 from card_model import DigitalCardGenerator
 from video_renderer import DigitalVideoBannerGenerator
 from progress_tracker import ProgressTracker
-from config import VIDEO_CSV_PATH, VIDEO_OUTPUT_PATH, LAST_PROCESSED_ID_PATH
+from config import (
+    VIDEO_CSV_PATH,
+    VIDEO_OUTPUT_PATH,
+    LAST_PROCESSED_ID_PATH,
+    FONT_PATH,
+    VIDEO_NAME_FONT_SIZE_MIN,
+    VIDEO_NAME_MAX_WIDTH,
+)
+
+
+def _warn_overflow_names(cards) -> None:
+    font = ImageFont.truetype(FONT_PATH, VIDEO_NAME_FONT_SIZE_MIN)
+    overflows = []
+    for card in cards:
+        name = card.get_name().title()
+        bbox = font.getbbox(name)
+        if (bbox[2] - bbox[0]) > VIDEO_NAME_MAX_WIDTH:
+            overflows.append((card.get_id(), name, bbox[2] - bbox[0]))
+
+    if overflows:
+        print(
+            f"\n⚠  NAME OVERFLOW WARNING — {len(overflows)} name(s) exceed "
+            f"{VIDEO_NAME_MAX_WIDTH}px even at minimum font size ({VIDEO_NAME_FONT_SIZE_MIN}pt):"
+        )
+        for id_, name, px in overflows:
+            print(f"  Row {id_:>4} | {name!r:<45} | {px}px")
+        print("  Consider shortening these names in the CSV.\n")
 
 
 class DigitalVideoBannerProcessor:
     def __init__(self, data_source):
         self.digital_cards = self.load_digital_cards(data_source)
+        _warn_overflow_names(self.digital_cards)
 
     def load_digital_cards(self, input_path):
         cardsGenerator = DigitalCardGenerator(input_path)
