@@ -3,9 +3,13 @@ output
 
 # Exclude macOS file system files
 .DS_Store
+**/.DS_Store
 
 # Exclude Python compiled files and directories
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+.claude
+.archive
