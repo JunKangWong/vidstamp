@@ -208,9 +208,9 @@
       <div class="section">
         <div class="section-title">Preview Frame</div>
         <div class="field field-slider">
-          <label>Frame at (s)</label>
+          <label>Fade In At (s)</label>
           <input type="range" id="frame-time-slider" min="0" max="18" step="0.1" />
-          <input type="number" id="frame-time-input" step="0.1" />
+          <input type="number" id="frame-time-input" data-key="VIDEO_TEXT_ENTRANCE_TIME" step="0.1" />
         </div>
       </div>
 
@@ -329,6 +329,7 @@ const VIDEO_KEYS = [
   "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MEDIUM", "VIDEO_NAME_FONT_SIZE_SMALL",
   "VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD", "VIDEO_NAME_LENGTH_LONG_THRESHOLD",
   "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR",
+  "VIDEO_TEXT_ENTRANCE_TIME",
 ];
 const IMAGE_KEYS = [
   "IMAGE_NAME_Y", "IMAGE_TABLE_Y",

@@ -15,7 +15,7 @@ VIDEO_CSV_PATH = str(_HERE / "input" / "trr_invitation_batch_1.csv")
 IMAGE_TEMPLATE_PATH = str(_HERE / "template" / "trr_invitation.png")
 
 # Font file used for both image cards and video overlays
-FONT_PATH = str(_HERE / "font" / "biondi" / "biondi-sans-bd-AF65ded4d8b78fb.otf")
+FONT_PATH = str(_HERE / "font" / "biondi" / "biondi-sans-rg-AF65ded4d89bfb4.otf")
 
 # Output ZIP that bundles all generated image cards
 IMAGE_OUTPUT_ZIP_PATH = str(_HERE / "output" / "digital_cards.zip")
@@ -84,7 +84,7 @@ VIDEO_NAME_LENGTH_LONG_THRESHOLD = 35
 VIDEO_TABLE_FONT_SIZE = 28
 
 # Text color for all overlays (name + table number)
-VIDEO_FONT_COLOR = "black"
+VIDEO_FONT_COLOR = "white"
 
 # ─── Video Banner — Text Positioning ─────────────────────────────────────────
 
@@ -109,4 +109,4 @@ VIDEO_TEXT_DURATION = 15.0
 VIDEO_TEXT_FADE_DURATION = 1
 
 # Delay (seconds) before text overlays appear after the video starts
-VIDEO_TEXT_ENTRANCE_TIME = 0.5
+VIDEO_TEXT_ENTRANCE_TIME = 5.0

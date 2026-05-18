@@ -36,6 +36,7 @@ UI_KEYS = [
     "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MEDIUM", "VIDEO_NAME_FONT_SIZE_SMALL",
     "VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD", "VIDEO_NAME_LENGTH_LONG_THRESHOLD",
     "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR",
+    "VIDEO_TEXT_ENTRANCE_TIME",
     "IMAGE_NAME_Y", "IMAGE_TABLE_Y",
     "IMAGE_NAME_FONT_SIZE", "IMAGE_TABLE_FONT_SIZE",
 ]
@@ -75,10 +76,7 @@ def get_frame_at(t: float) -> Image.Image:
 
 
 def default_frame_time() -> float:
-    return min(
-        config.VIDEO_TEXT_ENTRANCE_TIME + config.VIDEO_TEXT_FADE_DURATION,
-        VIDEO_DURATION - 0.1,
-    )
+    return min(config.VIDEO_TEXT_ENTRANCE_TIME, VIDEO_DURATION - 0.1)
 
 
 def current_config_values() -> dict:
