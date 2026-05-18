@@ -179,6 +179,38 @@
   }
   .tab-pane { display: none; }
   .tab-pane.active { display: block; }
+  button.run-btn {
+    width: 100%;
+    padding: 10px;
+    background: #2a7a4b;
+    color: #e6e8eb;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  button.run-btn:hover { filter: brightness(1.15); }
+  button.run-btn:disabled { opacity: 0.5; cursor: wait; }
+  .log-panel {
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+  .log-output {
+    background: #0d0f13;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px;
+    font-family: monospace;
+    font-size: 11px;
+    height: 180px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--text);
+    margin: 6px 0 0;
+  }
 </style>
 </head>
 <body>
@@ -281,6 +313,19 @@
           <input type="number" data-key="VIDEO_NAME_LENGTH_LONG_THRESHOLD" step="1" />
         </div>
       </details>
+
+      <div class="section">
+        <div class="section-title">Run</div>
+        <div class="field">
+          <label>Input CSV</label>
+          <select id="video-csv-select"></select>
+        </div>
+        <div class="field">
+          <label>Output Dir</label>
+          <input type="text" id="video-output-path" data-key="VIDEO_OUTPUT_PATH" placeholder="./output/digital_video_banner" />
+        </div>
+        <button class="run-btn" id="run-video-btn">Generate Videos</button>
+      </div>
     </div>
 
     <!-- IMAGE TAB -->
@@ -307,9 +352,19 @@
           <input type="number" data-key="IMAGE_TABLE_FONT_SIZE" step="1" />
         </div>
       </div>
-      <p style="color: var(--muted); font-size: 12px;">
-        Image card preview is not live — adjust values and Save to commit.
-      </p>
+
+      <div class="section">
+        <div class="section-title">Run</div>
+        <div class="field">
+          <label>Input CSV</label>
+          <select id="image-csv-select"></select>
+        </div>
+        <div class="field">
+          <label>Output ZIP</label>
+          <input type="text" id="image-output-path" data-key="IMAGE_OUTPUT_ZIP_PATH" placeholder="./output/digital_cards.zip" />
+        </div>
+        <button class="run-btn" id="run-image-btn">Generate Image Cards</button>
+      </div>
     </div>
 
     <div class="save-row">
@@ -327,6 +382,13 @@
       <div class="preview-placeholder" id="preview-placeholder">Initialising…</div>
       <img id="preview-img" style="display: none;" alt="Preview" />
     </div>
+    <div class="log-panel" id="log-panel" style="display:none">
+      <div class="preview-status">
+        <span>Generation Log</span>
+        <span id="job-status-badge">—</span>
+      </div>
+      <pre class="log-output" id="job-log"></pre>
+    </div>
   </div>
 </main>
 
@@ -339,10 +401,12 @@ const VIDEO_KEYS = [
   "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR",
   "VIDEO_TEXT_ENTRANCE_TIME",
   "FONT_FILENAME",
+  "VIDEO_OUTPUT_PATH",
 ];
 const IMAGE_KEYS = [
   "IMAGE_NAME_Y", "IMAGE_TABLE_Y",
   "IMAGE_NAME_FONT_SIZE", "IMAGE_TABLE_FONT_SIZE",
+  "IMAGE_OUTPUT_ZIP_PATH",
 ];
 const ALL_KEYS = [...VIDEO_KEYS, ...IMAGE_KEYS];
 
@@ -445,6 +509,83 @@ function wireLiveUpdates() {
   });
 }
 
+let _pollTimer = null;
+let _currentJobId = null;
+
+async function loadInputs(videoCsvHint, imageCsvHint) {
+  const res = await fetch("/inputs");
+  const csvs = await res.json();
+  ["video-csv-select", "image-csv-select"].forEach((id, i) => {
+    const hint = i === 0 ? videoCsvHint : imageCsvHint;
+    const sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">— select CSV —</option>';
+    csvs.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    });
+    if (hint) sel.value = hint;
+  });
+}
+
+async function runJob(type) {
+  const csvSel = document.getElementById(`${type}-csv-select`);
+  const outputEl = document.getElementById(`${type}-output-path`);
+  const csv = csvSel.value;
+  if (!csv) { alert("Select an input CSV first."); return; }
+
+  const logPanel = document.getElementById("log-panel");
+  const logEl = document.getElementById("job-log");
+  const badge = document.getElementById("job-status-badge");
+  logPanel.style.display = "block";
+  logEl.textContent = "";
+  badge.textContent = "Starting…";
+  badge.className = "updating";
+
+  const runBtn = document.getElementById(`run-${type}-btn`);
+  runBtn.disabled = true;
+
+  try {
+    const res = await fetch("/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, csv, output: outputEl.value.trim() }),
+    });
+    const data = await res.json();
+    if (data.error) { badge.textContent = "Error: " + data.error; badge.className = "err"; runBtn.disabled = false; return; }
+    _currentJobId = data.job_id;
+    _pollTimer = setInterval(() => _pollJob(type), 1000);
+  } catch (e) {
+    badge.textContent = "Error: " + e.message;
+    badge.className = "err";
+    runBtn.disabled = false;
+  }
+}
+
+async function _pollJob(type) {
+  if (!_currentJobId) return;
+  const res = await fetch(`/run/${_currentJobId}`);
+  const job = await res.json();
+
+  const logEl = document.getElementById("job-log");
+  const badge = document.getElementById("job-status-badge");
+  logEl.textContent = job.lines.join("\n");
+  logEl.scrollTop = logEl.scrollHeight;
+
+  if (job.status === "running") {
+    badge.textContent = "Running…";
+    badge.className = "updating";
+  } else {
+    badge.textContent = job.status === "done" ? "Done" : "Error";
+    badge.className = job.status === "done" ? "ok" : "err";
+    clearInterval(_pollTimer);
+    _pollTimer = null;
+    _currentJobId = null;
+    document.getElementById(`run-${type}-btn`).disabled = false;
+  }
+}
+
 async function loadFonts() {
   const res = await fetch("/fonts");
   const fonts = await res.json();
@@ -508,13 +649,18 @@ async function init() {
   wireTabs();
   wireLiveUpdates();
   saveBtn.addEventListener("click", saveConfig);
+  document.getElementById("run-video-btn").addEventListener("click", () => runJob("video"));
+  document.getElementById("run-image-btn").addEventListener("click", () => runJob("image"));
 
+  let videoCsvHint = "", imageCsvHint = "";
   try {
     const res = await fetch("/config");
     const data = await res.json();
     Object.entries(data).forEach(([k, v]) => {
       if (!k.startsWith("_")) setKeyValue(k, v);
     });
+    videoCsvHint = data._video_csv_filename || "";
+    imageCsvHint = data._image_csv_filename || "";
     // Initialize frame-time controls from server metadata
     const duration = data._video_duration || 18;
     const defaultAt = data._default_at_time || 1.5;
@@ -533,7 +679,7 @@ async function init() {
     saveStatus.className = "status-line err";
     return;
   }
-  await loadFonts();
+  await Promise.all([loadFonts(), loadInputs(videoCsvHint, imageCsvHint)]);
   fetchPreview();
 }
 

@@ -30,9 +30,9 @@ import os
 
 
 class DigitalVideoBannerGenerator:
-    def __init__(self):
+    def __init__(self, output_path=None):
         self.input_path = VIDEO_INPUT_PATH
-        self.output_path = VIDEO_OUTPUT_PATH
+        self.output_path = output_path or VIDEO_OUTPUT_PATH
         self.codec = VIDEO_CODEC
         self.audio_codec = VIDEO_AUDIO_CODEC
         self.bit_rate = VIDEO_BITRATE

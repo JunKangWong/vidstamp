@@ -1,3 +1,4 @@
+import argparse
 import os
 import zipfile
 from card_model import DigitalCardGenerator
@@ -25,13 +26,17 @@ class DigitalCardImageGenerator(DigitalCardGenerator):
                 zipf.write(img_temp_path, arcname=os.path.basename(img_temp_path))
                 os.remove(img_temp_path)  # Clean up the temporary file
 
-# Example Usage
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--csv", default=IMAGE_CSV_PATH)
+    parser.add_argument("--output", default=IMAGE_OUTPUT_ZIP_PATH)
+    args = parser.parse_args()
+
     generator = DigitalCardImageGenerator(
-        csv_file_path=IMAGE_CSV_PATH,
+        csv_file_path=args.csv,
         image_template_path=IMAGE_TEMPLATE_PATH,
         font_path=FONT_PATH,
-        output_zip_path=IMAGE_OUTPUT_ZIP_PATH,
+        output_zip_path=args.output,
     )
     generator.generate_and_zip_cards()
-    print(f"Digital cards have been generated and saved to: {generator.output_zip_path}")
+    print(f"Done. Cards saved to: {generator.output_zip_path}")

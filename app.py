@@ -19,6 +19,10 @@ from __future__ import annotations
 import io
 import os
 import re
+import subprocess
+import sys
+import threading
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -38,8 +42,10 @@ UI_KEYS = [
     "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR",
     "VIDEO_TEXT_ENTRANCE_TIME",
     "FONT_FILENAME",
+    "VIDEO_OUTPUT_PATH",
     "IMAGE_NAME_Y", "IMAGE_TABLE_Y",
     "IMAGE_NAME_FONT_SIZE", "IMAGE_TABLE_FONT_SIZE",
+    "IMAGE_OUTPUT_ZIP_PATH",
 ]
 
 CONFIG_FILE = Path(__file__).parent / "config.py"
@@ -54,6 +60,9 @@ FRAME_CACHE: dict[float, Image.Image] = {}
 FRAME_CACHE_MAX = 20
 
 app = Flask(__name__)
+
+# job_id -> {"status": "running"|"done"|"error", "lines": [...]}
+_jobs: dict[str, dict] = {}
 
 
 def open_clip() -> tuple[VideoFileClip, float]:
@@ -172,6 +181,8 @@ def get_config():
         **values,
         "_video_duration": VIDEO_DURATION,
         "_default_at_time": default_frame_time(),
+        "_video_csv_filename": Path(config.VIDEO_CSV_PATH).name,
+        "_image_csv_filename": Path(config.IMAGE_CSV_PATH).name,
     })
 
 
@@ -232,6 +243,69 @@ def save():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
     return jsonify({"status": "ok", "backup": backup_path, "saved": updates})
+
+
+@app.route("/inputs")
+def list_inputs():
+    input_dir = Path(__file__).parent / "input"
+    csvs = sorted(p.name for p in input_dir.glob("*.csv")) if input_dir.exists() else []
+    return jsonify(csvs)
+
+
+@app.route("/run", methods=["POST"])
+def start_run():
+    data = request.get_json() or {}
+    job_type = data.get("type")
+    csv_filename = data.get("csv", "").strip()
+    output_path = data.get("output", "").strip()
+
+    if job_type not in ("video", "image"):
+        return jsonify({"error": "type must be 'video' or 'image'"}), 400
+    if not csv_filename:
+        return jsonify({"error": "csv is required"}), 400
+
+    base = Path(__file__).parent
+    csv_path = str(base / "input" / csv_filename)
+    if not Path(csv_path).exists():
+        return jsonify({"error": f"CSV not found: {csv_filename}"}), 400
+
+    if not output_path:
+        output_path = config.VIDEO_OUTPUT_PATH if job_type == "video" else config.IMAGE_OUTPUT_ZIP_PATH
+    elif not Path(output_path).is_absolute():
+        output_path = str(base / output_path)
+
+    job_id = uuid.uuid4().hex[:8]
+    _jobs[job_id] = {"status": "running", "lines": []}
+
+    script = "generate_video_banners.py" if job_type == "video" else "generate_image_cards.py"
+
+    def _run():
+        try:
+            proc = subprocess.Popen(
+                [sys.executable, str(base / script), "--csv", csv_path, "--output", output_path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                cwd=str(base),
+            )
+            for line in proc.stdout:
+                _jobs[job_id]["lines"].append(line.rstrip())
+            proc.wait()
+            _jobs[job_id]["status"] = "done" if proc.returncode == 0 else "error"
+        except Exception as exc:
+            _jobs[job_id]["lines"].append(f"Launch error: {exc}")
+            _jobs[job_id]["status"] = "error"
+
+    threading.Thread(target=_run, daemon=True).start()
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/run/<job_id>")
+def poll_run(job_id):
+    job = _jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "job not found"}), 404
+    return jsonify(job)
 
 
 def main():

@@ -1,6 +1,7 @@
+import argparse
 from card_model import DigitalCardGenerator
 from video_renderer import DigitalVideoBannerGenerator
-from config import VIDEO_CSV_PATH, LAST_PROCESSED_ID_PATH
+from config import VIDEO_CSV_PATH, VIDEO_OUTPUT_PATH, LAST_PROCESSED_ID_PATH
 
 
 class DigitalVideoBannerProcessor:
@@ -20,15 +21,17 @@ class DigitalVideoBannerProcessor:
         cardsGenerator.read_csv_and_generate_cards(start_id=start_id)
         return cardsGenerator.get_digital_cards()
 
-    ## TODO: validate if digital cards are unique...
-
-    def generate_digital_banner(self):
-        bannerGenerator = DigitalVideoBannerGenerator()
+    def generate_digital_banner(self, output_path=None):
+        bannerGenerator = DigitalVideoBannerGenerator(output_path=output_path)
         bannerGenerator.process_videos(self.digital_cards)
 
 
 if __name__ == "__main__":
-    processor = DigitalVideoBannerProcessor(data_source=VIDEO_CSV_PATH)
-    print(processor.digital_cards)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--csv", default=VIDEO_CSV_PATH)
+    parser.add_argument("--output", default=VIDEO_OUTPUT_PATH)
+    args = parser.parse_args()
 
-    processor.generate_digital_banner()
+    processor = DigitalVideoBannerProcessor(data_source=args.csv)
+    print(f"Loaded {len(processor.digital_cards)} cards from {args.csv}")
+    processor.generate_digital_banner(output_path=args.output)
