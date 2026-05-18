@@ -37,12 +37,14 @@ UI_KEYS = [
     "VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD", "VIDEO_NAME_LENGTH_LONG_THRESHOLD",
     "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR",
     "VIDEO_TEXT_ENTRANCE_TIME",
+    "FONT_FILENAME",
     "IMAGE_NAME_Y", "IMAGE_TABLE_Y",
     "IMAGE_NAME_FONT_SIZE", "IMAGE_TABLE_FONT_SIZE",
 ]
 
 CONFIG_FILE = Path(__file__).parent / "config.py"
 BACKUP_DIR = Path(__file__).parent / "output" / "config_backup"
+FONT_DIR = Path(__file__).parent / "font"
 
 # Keep the clip alive so we can re-extract frames on demand without re-opening
 # the 31 MB file each time. Cache extracted frames by timestamp.
@@ -173,6 +175,19 @@ def get_config():
     })
 
 
+@app.route("/fonts")
+def list_fonts():
+    base = Path(__file__).parent
+    fonts = []
+    for path in sorted(FONT_DIR.rglob("*")):
+        if path.suffix.lower() in (".ttf", ".otf"):
+            rel = str(path.relative_to(base))
+            stem = re.sub(r"-[A-Fa-f0-9]{10,}$", "", path.stem)
+            name = stem.replace("-", " ").replace("_", " ").title()
+            fonts.append({"name": name, "path": rel})
+    return jsonify(fonts)
+
+
 @app.route("/preview", methods=["POST"])
 def preview():
     if VIDEO_CLIP is None:
@@ -188,6 +203,8 @@ def preview():
         at_time = default_frame_time()
     raw_overrides = data.get("overrides") or {}
     overrides = {k: coerce_value(k, v) for k, v in raw_overrides.items() if k in UI_KEYS}
+    if "FONT_FILENAME" in overrides:
+        overrides["FONT_PATH"] = str(Path(__file__).parent / overrides["FONT_FILENAME"])
 
     frame = get_frame_at(at_time).copy()
     img = generate_preview_image(

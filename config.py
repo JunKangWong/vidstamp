@@ -14,8 +14,9 @@ VIDEO_CSV_PATH = str(_HERE / "input" / "trr_invitation_batch_1.csv")
 # Image template drawn on for each card
 IMAGE_TEMPLATE_PATH = str(_HERE / "template" / "trr_invitation.png")
 
-# Font file used for both image cards and video overlays
-FONT_PATH = str(_HERE / "font" / "biondi" / "biondi-sans-rg-AF65ded4d89bfb4.otf")
+# Font file used for both image cards and video overlays (path relative to project root)
+FONT_FILENAME = "font/biondi/biondi-sans-rg-AF65ded4d89bfb4.otf"
+FONT_PATH = str(_HERE / FONT_FILENAME)
 
 # Output ZIP that bundles all generated image cards
 IMAGE_OUTPUT_ZIP_PATH = str(_HERE / "output" / "digital_cards.zip")
@@ -66,7 +67,7 @@ VIDEO_BITRATE = "5000k"
 # ─── Video Banner — Text & Font ───────────────────────────────────────────────
 
 # Default font size for the attendee name overlay
-VIDEO_NAME_FONT_SIZE = 54
+VIDEO_NAME_FONT_SIZE = 48
 
 # Font size used when name length exceeds VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD
 VIDEO_NAME_FONT_SIZE_MEDIUM = 45

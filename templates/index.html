@@ -235,6 +235,14 @@
       </div>
 
       <div class="section">
+        <div class="section-title">Font</div>
+        <div class="field">
+          <label>Typeface</label>
+          <select data-key="FONT_FILENAME" id="font-select"></select>
+        </div>
+      </div>
+
+      <div class="section">
         <div class="section-title">Font Sizes</div>
         <div class="field">
           <label>Name (large)</label>
@@ -330,6 +338,7 @@ const VIDEO_KEYS = [
   "VIDEO_NAME_LENGTH_MEDIUM_THRESHOLD", "VIDEO_NAME_LENGTH_LONG_THRESHOLD",
   "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR",
   "VIDEO_TEXT_ENTRANCE_TIME",
+  "FONT_FILENAME",
 ];
 const IMAGE_KEYS = [
   "IMAGE_NAME_Y", "IMAGE_TABLE_Y",
@@ -428,10 +437,27 @@ function schedulePreview() {
 }
 
 function wireLiveUpdates() {
-  // every input change triggers a debounced preview
   document.querySelectorAll("input").forEach(el => {
     el.addEventListener("input", schedulePreview);
   });
+  document.querySelectorAll("select[data-key]").forEach(el => {
+    el.addEventListener("change", schedulePreview);
+  });
+}
+
+async function loadFonts() {
+  const res = await fetch("/fonts");
+  const fonts = await res.json();
+  const sel = document.getElementById("font-select");
+  sel.innerHTML = "";
+  fonts.forEach(f => {
+    const opt = document.createElement("option");
+    opt.value = f.path;
+    opt.textContent = f.name;
+    sel.appendChild(opt);
+  });
+  const current = currentValues["FONT_FILENAME"];
+  if (current) sel.value = current;
 }
 
 function wireTabs() {
@@ -507,6 +533,7 @@ async function init() {
     saveStatus.className = "status-line err";
     return;
   }
+  await loadFonts();
   fetchPreview();
 }
 
