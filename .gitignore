@@ -1,5 +1,9 @@
 # exclude generated files
 output
+input
+
+# exclude image or video templates
+template
 
 # Exclude macOS file system files
 .DS_Store
@@ -13,3 +17,4 @@ __pycache__/
 
 .claude
 .archive
+

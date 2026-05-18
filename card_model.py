@@ -35,18 +35,20 @@ class DigitalCardGenerator:
         self.csv_file_path = csv_file_path
         self.cards = []
 
-    def read_csv_and_generate_cards(self, start_id=1):  # Add start_id parameter
+    def read_csv_and_generate_cards(self, start_id=1):
         with open(self.csv_file_path, mode="r", newline="") as file:
             reader = csv.DictReader(file)
             for row in reader:
-                if int(row["id"]) >= start_id:  # Start from specified ID
+                if int(row["id"]) >= start_id:
+                    # "branch" or "location" are both accepted as the grouping column
+                    branch = row.get("branch") or row.get("location") or ""
                     self.cards.append(
                         DigitalCard(
                             row["id"],
                             row["name"],
                             row["table_no"],
-                            row["language"],
-                            row["branch"],
+                            row.get("language", ""),
+                            branch,
                         )
                     )
 

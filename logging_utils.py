@@ -1,6 +1,9 @@
+import os
 import time
 import logging
-from config import LOG_FILE_PATH, LAST_PROCESSED_ID_PATH
+from config import LOG_DIR, LOG_FILE_PATH, LAST_PROCESSED_ID_PATH
+
+os.makedirs(LOG_DIR, exist_ok=True)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

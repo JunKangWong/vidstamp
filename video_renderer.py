@@ -1,4 +1,5 @@
-from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
+from moviepy import VideoFileClip, TextClip, CompositeVideoClip
+from moviepy.video.fx import CrossFadeIn
 from card_model import DigitalCard
 from logging_utils import time_decorator, log_execution_time_with_details
 from config import (
@@ -56,39 +57,37 @@ class DigitalVideoBannerGenerator:
             font_size = VIDEO_NAME_FONT_SIZE_MEDIUM
         name = name.title()
         name_text = TextClip(
-            name,
-            fontsize=font_size,
+            text=name,
+            font_size=font_size,
             color=self.font_color,
             font=self.font,
             size=vid_size,
+            duration=self.text_duration,
         )
-        name_text = name_text.set_duration(self.text_duration).set_position(
-            (self.name_pos_x, self.name_pos_y)
-        )
-        name_text = name_text.crossfadein(self.text_fade_duration)
-        name_text = name_text.set_start(self.text_entrance_time)
+        name_text = name_text.with_position((self.name_pos_x, self.name_pos_y))
+        name_text = name_text.with_effects([CrossFadeIn(self.text_fade_duration)])
+        name_text = name_text.with_start(self.text_entrance_time)
         return name_text
 
     def generate_table_num(self, no, vid_size):
         formatted_table_num = "Table No: {}".format(no)
         table_no = TextClip(
-            formatted_table_num,
-            fontsize=self.table_num_font_size,
+            text=formatted_table_num,
+            font_size=self.table_num_font_size,
             color=self.font_color,
             font=self.font,
             size=vid_size,
+            duration=self.text_duration,
         )
-        table_no = table_no.set_duration(self.text_duration).set_position(
-            (self.table_num_pos_x, self.table_num_pos_y)
-        )
-        table_no = table_no.crossfadein(self.text_fade_duration)
-        table_no = table_no.set_start(self.text_entrance_time)
+        table_no = table_no.with_position((self.table_num_pos_x, self.table_num_pos_y))
+        table_no = table_no.with_effects([CrossFadeIn(self.text_fade_duration)])
+        table_no = table_no.with_start(self.text_entrance_time)
         return table_no
 
     def output_video(self, final_video, output_name, branch):
         output_path = os.path.join(self.output_path, branch)
         os.makedirs(output_path, exist_ok=True)
-        output = "{}/{}".format(output_path, output_name)
+        output = os.path.join(output_path, output_name)
         final_video.write_videofile(
             output,
             codec=self.codec,
@@ -114,7 +113,7 @@ class DigitalVideoBannerGenerator:
         final_video = CompositeVideoClip(
             [input_video, gen_name, table], use_bgclip=True
         )
-        final_video = final_video.set_audio(input_video_audio)
+        final_video = final_video.with_audio(input_video_audio)
         output_name = self.generate_output_video_name(name, table_num)
         self.output_video(final_video, output_name, branch)
         input_video.close()
@@ -134,8 +133,6 @@ if __name__ == "__main__":
     generator = DigitalVideoBannerGenerator()
     generator.process_video("Albert Einstein", "T3")
 
-    # Read from excel
-    # TODO: check for duplicated data from excel (Validation)
-    # Length check (optional)
+    # TODO: check for duplicated data (Validation)
     # Divide the task to use multiple threads for processing to improve processing speed.
     # Compression of the output with lossless compression

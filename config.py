@@ -6,19 +6,19 @@ import os
 IMAGE_CSV_PATH = "./input/sample_namelist.csv"
 
 # Input CSV for video banner generation
-VIDEO_CSV_PATH = "./input/trr.csv"
+VIDEO_CSV_PATH = "./input/trr_invitation_batch_1.csv"
 
 # Image template drawn on for each card
 IMAGE_TEMPLATE_PATH = "./template/trr_invitation.png"
 
 # Font file used for both image cards and video overlays
-FONT_PATH = "./font/BASKVILL.ttf"
+FONT_PATH = "./font/baskvill/BASKVILL.ttf"
 
 # Output ZIP that bundles all generated image cards
 IMAGE_OUTPUT_ZIP_PATH = "./output/digital_cards.zip"
 
 # Directory where source MP4 video files are located
-VIDEO_INPUT_PATH = "./input"
+VIDEO_INPUT_PATH = "./template"
 
 # Root output directory for generated video banners (one subfolder per branch)
 VIDEO_OUTPUT_PATH = "./output/digital_video_banner"
@@ -31,8 +31,9 @@ LOG_FILE_PATH = os.path.join(LOG_DIR, "digital_video_banner.log")
 LAST_PROCESSED_ID_PATH = os.path.join(LOG_DIR, "last_processed_id.txt")
 
 # Source video filenames — must exist inside VIDEO_INPUT_PATH
-VIDEO_EN_FILENAME = "TRR_E_Invitation_EN_S.mp4"  # Used when language == "E"
-VIDEO_CN_FILENAME = "TRR_E_Invitation_CN_S.mp4"  # Used when language == "C"
+# Set both to the same file if there is no language distinction
+VIDEO_EN_FILENAME = "INVITATIONC FINAL ADD NAME.mp4"  # Used when language == "E"
+VIDEO_CN_FILENAME = "INVITATIONC FINAL ADD NAME.mp4"  # Used when language == "C" or blank
 
 # ─── Image Card Settings ──────────────────────────────────────────────────────
 
@@ -98,8 +99,8 @@ VIDEO_TABLE_POS_Y = -176
 
 # ─── Video Banner — Text Timing ───────────────────────────────────────────────
 
-# How long (seconds) the text overlays remain visible
-VIDEO_TEXT_DURATION = 9.5
+# How long (seconds) the text overlays remain visible (video is 18.34s)
+VIDEO_TEXT_DURATION = 15.0
 
 # Duration (seconds) of the crossfade-in effect when text overlays appear
 VIDEO_TEXT_FADE_DURATION = 1
