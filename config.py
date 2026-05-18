@@ -19,13 +19,13 @@ FONT_FILENAME = "font/biondi/biondi-sans-rg-AF65ded4d89bfb4.otf"
 FONT_PATH = str(_HERE / FONT_FILENAME)
 
 # Output ZIP that bundles all generated image cards
-IMAGE_OUTPUT_ZIP_PATH = str(_HERE / "output" / "digital_cards.zip")
+IMAGE_OUTPUT_ZIP_PATH = "/Users/junkang/Documents/repo/personal/digital_card_generator/output/digital_cards.zip"
 
 # Directory where source MP4 video files are located
 VIDEO_INPUT_PATH = str(_HERE / "template")
 
 # Root output directory for generated video banners (one subfolder per branch)
-VIDEO_OUTPUT_PATH = str(_HERE / "output" / "digital_video_banner")
+VIDEO_OUTPUT_PATH = "/Users/junkang/Documents/repo/personal/digital_card_generator/output/digital_video_banner"
 
 # Directory for log files and resume state
 LOG_DIR = str(_HERE / "output" / "log")

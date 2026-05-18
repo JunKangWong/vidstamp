@@ -48,7 +48,7 @@ class DigitalVideoBannerGenerator:
         self.text_fade_duration = VIDEO_TEXT_FADE_DURATION
         self.text_entrance_time = VIDEO_TEXT_ENTRANCE_TIME
 
-    def generate_name(self, name, vid_size):
+    def generate_name(self, name):
         size = len(name)
         font_size = self.name_font_size
         if size > VIDEO_NAME_LENGTH_LONG_THRESHOLD:
@@ -61,7 +61,6 @@ class DigitalVideoBannerGenerator:
             font_size=font_size,
             color=self.font_color,
             font=self.font,
-            size=vid_size,
             duration=self.text_duration,
         )
         name_text = name_text.with_position((self.name_pos_x, self.name_pos_y))
@@ -69,14 +68,13 @@ class DigitalVideoBannerGenerator:
         name_text = name_text.with_start(self.text_entrance_time)
         return name_text
 
-    def generate_table_num(self, no, vid_size):
+    def generate_table_num(self, no):
         formatted_table_num = "Table No: {}".format(no)
         table_no = TextClip(
             text=formatted_table_num,
             font_size=self.table_num_font_size,
             color=self.font_color,
             font=self.font,
-            size=vid_size,
             duration=self.text_duration,
         )
         table_no = table_no.with_position((self.table_num_pos_x, self.table_num_pos_y))
@@ -107,9 +105,8 @@ class DigitalVideoBannerGenerator:
         input_path = os.path.join(self.input_path, filename)
         input_video = VideoFileClip(input_path)
         input_video_audio = input_video.audio
-        input_video_size = input_video.size
-        gen_name = self.generate_name(name, input_video_size)
-        table = self.generate_table_num(table_num, input_video_size)
+        gen_name = self.generate_name(name)
+        table = self.generate_table_num(table_num)
         final_video = CompositeVideoClip(
             [input_video, gen_name, table], use_bgclip=True
         )
