@@ -10,6 +10,7 @@ from config import (
     VIDEO_CODEC,
     VIDEO_AUDIO_CODEC,
     VIDEO_BITRATE,
+    VIDEO_PIXEL_FORMAT,
     VIDEO_NAME_FONT_SIZE,
     VIDEO_NAME_FONT_SIZE_MIN,
     VIDEO_NAME_FONT_SIZE_STEP,
@@ -52,6 +53,7 @@ class DigitalVideoBannerGenerator:
         self.output_path = output_path or self._cfg('VIDEO_OUTPUT_PATH')
         self.codec = self._cfg('VIDEO_CODEC')
         self.audio_codec = self._cfg('VIDEO_AUDIO_CODEC')
+        self.pixel_format = self._cfg('VIDEO_PIXEL_FORMAT')
         self.bit_rate = self._cfg('VIDEO_BITRATE')
         self.name_font_size = self._cfg('VIDEO_NAME_FONT_SIZE')
         self.table_num_font_size = self._cfg('VIDEO_TABLE_FONT_SIZE')
@@ -135,7 +137,7 @@ class DigitalVideoBannerGenerator:
             codec=self.codec,
             audio_codec=self.audio_codec,
             bitrate=self.bit_rate,
-            ffmpeg_params=["-pix_fmt", "yuv420p"],
+            ffmpeg_params=["-pix_fmt", self.pixel_format],
         )
 
     def generate_output_video_name(self, name, table_num):

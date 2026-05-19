@@ -67,6 +67,10 @@ VIDEO_CODEC = "libx264"
 # Audio encoding codec
 VIDEO_AUDIO_CODEC = "aac"
 
+# Pixel format — yuv420p is universally compatible (Windows, VLC, phones)
+# yuv444p preserves more colour but many Windows decoders reject it
+VIDEO_PIXEL_FORMAT = "yuv420p"
+
 # Output video bitrate — higher = better quality, larger file size
 VIDEO_BITRATE = "5000k"
 

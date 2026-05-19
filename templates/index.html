@@ -398,6 +398,17 @@
         </div>
       </div>
 
+      <div class="section">
+        <div class="section-title">Encoding</div>
+        <div class="field">
+          <label>Pixel format</label>
+          <select data-key="VIDEO_PIXEL_FORMAT">
+            <option value="yuv420p">yuv420p (compatible — Windows, VLC, phones)</option>
+            <option value="yuv444p">yuv444p (higher colour depth)</option>
+          </select>
+        </div>
+      </div>
+
       <details>
         <summary>Name width fitting</summary>
         <div class="field">
@@ -524,6 +535,13 @@
             <label>Font color</label>
             <input type="text" data-single-key="VIDEO_FONT_COLOR" placeholder="white, black, #aa8800…" />
           </div>
+          <div class="field">
+            <label>Pixel format</label>
+            <select data-single-key="VIDEO_PIXEL_FORMAT">
+              <option value="yuv420p">yuv420p (compatible)</option>
+              <option value="yuv444p">yuv444p (higher colour)</option>
+            </select>
+          </div>
         </details>
 
         <button class="run-btn" id="sc-generate-btn" disabled style="margin-top:10px;">Generate This Card</button>
@@ -608,7 +626,7 @@ const VIDEO_KEYS = [
   "VIDEO_TABLE_POS_X", "VIDEO_TABLE_POS_Y",
   "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MIN", "VIDEO_NAME_FONT_SIZE_STEP",
   "VIDEO_NAME_MAX_WIDTH", "VIDEO_NAME_CASING", "VIDEO_TABLE_PREFIX", "VIDEO_TABLE_NUMBER_FORMAT", "VIDEO_TABLE_PREFIX_SPACING", "VIDEO_TABLE_CASING",
-  "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR",
+  "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR", "VIDEO_PIXEL_FORMAT",
   "VIDEO_TEXT_ENTRANCE_TIME",
   "FONT_FILENAME",
   "VIDEO_OUTPUT_PATH",
@@ -1012,7 +1030,7 @@ function selectCard(card) {
     "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MIN", "VIDEO_NAME_FONT_SIZE_STEP",
     "VIDEO_NAME_MAX_WIDTH", "VIDEO_NAME_CASING",
     "VIDEO_TABLE_PREFIX", "VIDEO_TABLE_PREFIX_SPACING", "VIDEO_TABLE_NUMBER_FORMAT", "VIDEO_TABLE_CASING",
-    "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR", "FONT_FILENAME",
+    "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR", "VIDEO_PIXEL_FORMAT", "FONT_FILENAME",
   ];
   singleKeys.forEach(key => {
     const liveValue = readKeyValue(key);
