@@ -254,6 +254,85 @@ def list_inputs():
     return jsonify(csvs)
 
 
+@app.route("/cards")
+def list_cards():
+    csv_filename = request.args.get("csv", "").strip()
+    if not csv_filename:
+        return jsonify({"error": "csv param required"}), 400
+    csv_path = Path(__file__).parent / "input" / csv_filename
+    if not csv_path.exists():
+        return jsonify({"error": f"CSV not found: {csv_filename}"}), 404
+    from card_model import DigitalCardGenerator
+    gen = DigitalCardGenerator(str(csv_path))
+    gen.read_csv_and_generate_cards(start_id=1)
+    return jsonify([
+        {"id": c.get_id(), "name": c.get_name(),
+         "table_no": c.get_table_number(), "branch": c.get_branch()}
+        for c in gen.get_digital_cards()
+    ])
+
+
+@app.route("/run-single", methods=["POST"])
+def start_run_single():
+    import json as _json
+    data = request.get_json() or {}
+    card_id = data.get("card_id")
+    csv_filename = data.get("csv", "").strip()
+    output_path = data.get("output", "").strip()
+    raw_overrides = data.get("overrides") or {}
+
+    if card_id is None:
+        return jsonify({"error": "card_id is required"}), 400
+    if not csv_filename:
+        return jsonify({"error": "csv is required"}), 400
+
+    base = Path(__file__).parent
+    csv_path = str(base / "input" / csv_filename)
+    if not Path(csv_path).exists():
+        return jsonify({"error": f"CSV not found: {csv_filename}"}), 400
+
+    overrides = {k: coerce_value(k, v) for k, v in raw_overrides.items() if k in UI_KEYS}
+    if "FONT_FILENAME" in overrides:
+        overrides["FONT_PATH"] = str(base / overrides.pop("FONT_FILENAME"))
+
+    if not output_path:
+        output_path = config.VIDEO_OUTPUT_PATH
+    elif not Path(output_path).is_absolute():
+        output_path = str(base / output_path)
+
+    job_id = uuid.uuid4().hex[:8]
+    _jobs[job_id] = {"status": "running", "lines": []}
+
+    overrides_json = _json.dumps(overrides)
+
+    def _run():
+        try:
+            proc = subprocess.Popen(
+                [
+                    sys.executable,
+                    str(base / "generate_video_banners.py"),
+                    "--csv", csv_path,
+                    "--output", output_path,
+                    "--single-id", str(card_id),
+                    "--overrides", overrides_json,
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                cwd=str(base),
+            )
+            for line in proc.stdout:
+                _jobs[job_id]["lines"].append(line.rstrip())
+            proc.wait()
+            _jobs[job_id]["status"] = "done" if proc.returncode == 0 else "error"
+        except Exception as exc:
+            _jobs[job_id]["lines"].append(f"Launch error: {exc}")
+            _jobs[job_id]["status"] = "error"
+
+    threading.Thread(target=_run, daemon=True).start()
+    return jsonify({"job_id": job_id})
+
+
 @app.route("/run", methods=["POST"])
 def start_run():
     data = request.get_json() or {}

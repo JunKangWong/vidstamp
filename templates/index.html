@@ -249,6 +249,30 @@
     color: var(--text);
     margin: 6px 0 0;
   }
+  .sc-card-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    margin-bottom: 6px;
+  }
+  .sc-card-row {
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: monospace;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sc-card-row:last-child { border-bottom: none; }
+  .sc-card-row:hover { background: var(--panel-soft); }
+  .sc-card-row.selected {
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--accent);
+  }
 </style>
 </head>
 <body>
@@ -406,6 +430,112 @@
         </div>
         <div class="progress-label" id="progress-label"></div>
       </div>
+
+      <!-- SINGLE CARD -->
+      <div class="section">
+        <div class="section-title">Single Card</div>
+        <input type="text" id="sc-search" placeholder="Search name / table / branch…"
+          style="width:100%;padding:6px 8px;background:var(--panel-soft);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px;margin-bottom:8px;" />
+        <button id="sc-clear-btn" class="ctrl-btn" disabled
+          style="margin-bottom:8px;padding:4px 10px;font-size:11px;flex:none;">
+          Use sample text (clear selection)
+        </button>
+        <div id="sc-no-csv" style="color:var(--muted);font-size:12px;padding:4px 0;">Select a CSV above to load cards.</div>
+        <div id="sc-card-list" class="sc-card-list" style="display:none"></div>
+        <div id="sc-selected-info" style="display:none;padding:6px 0;font-size:12px;color:var(--accent);font-weight:600;"></div>
+
+        <details id="sc-overrides-panel" style="display:none;margin-top:8px;">
+          <summary>Per-card settings</summary>
+          <div class="field">
+            <label>Typeface</label>
+            <select data-single-key="FONT_FILENAME" id="sc-font-select"></select>
+          </div>
+          <div class="field">
+            <label>Name Y</label>
+            <input type="number" data-single-key="VIDEO_NAME_POS_Y" step="1" />
+          </div>
+          <div class="field">
+            <label>Table Y</label>
+            <input type="number" data-single-key="VIDEO_TABLE_POS_Y" step="1" />
+          </div>
+          <div class="field">
+            <label>Name X</label>
+            <input type="text" data-single-key="VIDEO_NAME_POS_X" placeholder="center or pixel offset" />
+          </div>
+          <div class="field">
+            <label>Table X</label>
+            <input type="text" data-single-key="VIDEO_TABLE_POS_X" placeholder="center or pixel offset" />
+          </div>
+          <div class="field">
+            <label>Name casing</label>
+            <select data-single-key="VIDEO_NAME_CASING">
+              <option value="title">Title Case</option>
+              <option value="upper">ALL CAPS</option>
+              <option value="lower">lowercase</option>
+              <option value="as-is">As-is (from CSV)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Name size (max)</label>
+            <input type="number" data-single-key="VIDEO_NAME_FONT_SIZE" step="1" />
+          </div>
+          <div class="field">
+            <label>Name size (min)</label>
+            <input type="number" data-single-key="VIDEO_NAME_FONT_SIZE_MIN" step="1" />
+          </div>
+          <div class="field">
+            <label>Max width (px)</label>
+            <input type="number" data-single-key="VIDEO_NAME_MAX_WIDTH" step="10" />
+          </div>
+          <div class="field">
+            <label>Size step (pt)</label>
+            <input type="number" data-single-key="VIDEO_NAME_FONT_SIZE_STEP" step="1" />
+          </div>
+          <div class="field">
+            <label>Table size</label>
+            <input type="number" data-single-key="VIDEO_TABLE_FONT_SIZE" step="1" />
+          </div>
+          <div class="field">
+            <label>Table prefix</label>
+            <input type="text" data-single-key="VIDEO_TABLE_PREFIX" />
+          </div>
+          <div class="field">
+            <label>Prefix spacing</label>
+            <input type="number" data-single-key="VIDEO_TABLE_PREFIX_SPACING" step="1" min="0" />
+          </div>
+          <div class="field">
+            <label>Table number format</label>
+            <select data-single-key="VIDEO_TABLE_NUMBER_FORMAT">
+              <option value="padded">Zero-padded (01, 02…)</option>
+              <option value="number">Number only (1, 2…)</option>
+              <option value="as-is">As-is (T1, K8…)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Table casing</label>
+            <select data-single-key="VIDEO_TABLE_CASING">
+              <option value="as-is">As-is</option>
+              <option value="upper">ALL CAPS</option>
+              <option value="lower">lowercase</option>
+              <option value="title">Title Case</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Font color</label>
+            <input type="text" data-single-key="VIDEO_FONT_COLOR" placeholder="white, black, #aa8800…" />
+          </div>
+        </details>
+
+        <button class="run-btn" id="sc-generate-btn" disabled style="margin-top:10px;">Generate This Card</button>
+        <div id="sc-log-panel" style="display:none;margin-top:8px;">
+          <div class="preview-status">
+            <span>Single Card Log</span>
+            <span id="sc-job-badge">—</span>
+          </div>
+          <pre class="log-output" id="sc-job-log" style="height:120px;"></pre>
+        </div>
+      </div>
+
     </div>
 
     <!-- IMAGE TAB -->
@@ -493,6 +623,7 @@ const ALL_KEYS = [...VIDEO_KEYS, ...IMAGE_KEYS];
 let debounceTimer = null;
 let lastObjectURL = null;
 let currentValues = {};
+let singleCard = { selected: null, allCards: [], jobId: null };
 
 const previewImg = document.getElementById("preview-img");
 const previewPlaceholder = document.getElementById("preview-placeholder");
@@ -567,7 +698,7 @@ async function fetchPreview() {
     previewPlaceholder.style.display = "none";
     if (lastObjectURL) URL.revokeObjectURL(lastObjectURL);
     lastObjectURL = url;
-    previewStatus.textContent = "Ready · " + new Date().toLocaleTimeString();
+    previewStatus.textContent = "Sample text · " + new Date().toLocaleTimeString();
     previewStatus.className = "ok";
   } catch (e) {
     previewStatus.textContent = "Error: " + e.message;
@@ -577,14 +708,15 @@ async function fetchPreview() {
 
 function schedulePreview() {
   clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(fetchPreview, 300);
+  debounceTimer = setTimeout(singleCard.selected ? fetchSinglePreview : fetchPreview, 300);
 }
 
 function wireLiveUpdates() {
   document.querySelectorAll("input").forEach(el => {
+    if (el.id === "sc-search") return;
     el.addEventListener("input", schedulePreview);
   });
-  document.querySelectorAll("select[data-key]").forEach(el => {
+  document.querySelectorAll("select[data-key], select[data-single-key]").forEach(el => {
     el.addEventListener("change", schedulePreview);
   });
 }
@@ -608,6 +740,9 @@ async function loadInputs(videoCsvHint, imageCsvHint) {
     });
     if (hint) sel.value = hint;
   });
+  const videoSel = document.getElementById("video-csv-select");
+  videoSel.addEventListener("change", () => loadCardsForCsv(videoSel.value));
+  if (videoCsvHint) await loadCardsForCsv(videoCsvHint);
 }
 
 function fmtEta(secs) {
@@ -716,16 +851,18 @@ async function _pollJob(type) {
 async function loadFonts() {
   const res = await fetch("/fonts");
   const fonts = await res.json();
-  const sel = document.getElementById("font-select");
-  sel.innerHTML = "";
-  fonts.forEach(f => {
-    const opt = document.createElement("option");
-    opt.value = f.path;
-    opt.textContent = f.name;
-    sel.appendChild(opt);
-  });
   const current = currentValues["FONT_FILENAME"];
-  if (current) sel.value = current;
+  ["font-select", "sc-font-select"].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = "";
+    fonts.forEach(f => {
+      const opt = document.createElement("option");
+      opt.value = f.path;
+      opt.textContent = f.name;
+      sel.appendChild(opt);
+    });
+    if (current) sel.value = current;
+  });
 }
 
 function wireTabs() {
@@ -772,12 +909,211 @@ async function saveConfig() {
   }
 }
 
+// ── Single Card ───────────────────────────────────────────────────
+
+function collectSingleOverrides() {
+  const out = {};
+  document.querySelectorAll("[data-single-key]").forEach(el => {
+    const key = el.dataset.singleKey;
+    let v;
+    if (el.type === "number") {
+      if (el.value === "" || el.value === "-") return;
+      const n = Number(el.value);
+      v = Number.isNaN(n) ? el.value : n;
+    } else {
+      v = el.value.trim();
+      if (v === "") return;
+      if (v.toLowerCase() === "center") v = "center";
+      else { const n = Number(v); if (!Number.isNaN(n)) v = n; }
+    }
+    out[key] = v;
+  });
+  return out;
+}
+
+function setSingleValue(key, value) {
+  const el = document.querySelector(`[data-single-key="${key}"]`);
+  if (!el) return;
+  if (el.tagName === "SELECT") {
+    el.value = value != null ? value : "";
+  } else if (el.type === "number") {
+    el.value = (value === "center" || value == null) ? "" : value;
+  } else {
+    el.value = value != null ? value : "";
+  }
+}
+
+async function fetchSinglePreview() {
+  if (!singleCard.selected) return;
+  const name = singleCard.selected.name;
+  const table_no = singleCard.selected.table_no;
+  const at_time = parseFloat(document.getElementById("frame-time-input").value) || null;
+  const overrides = collectSingleOverrides();
+  previewStatus.textContent = "Updating…";
+  previewStatus.className = "updating";
+  try {
+    const res = await fetch("/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, table_no, at_time, overrides }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    previewImg.src = url;
+    previewImg.style.display = "block";
+    previewPlaceholder.style.display = "none";
+    if (lastObjectURL) URL.revokeObjectURL(lastObjectURL);
+    lastObjectURL = url;
+    previewStatus.textContent = "Single card · " + singleCard.selected.name + " · " + new Date().toLocaleTimeString();
+    previewStatus.className = "ok";
+  } catch (e) {
+    previewStatus.textContent = "Error: " + e.message;
+    previewStatus.className = "err";
+  }
+}
+
+function renderCardList() {
+  const filter = (document.getElementById("sc-search").value || "").toLowerCase();
+  const noCsvMsg = document.getElementById("sc-no-csv");
+  const listEl = document.getElementById("sc-card-list");
+  if (!singleCard.allCards.length) {
+    noCsvMsg.style.display = "block";
+    listEl.style.display = "none";
+    return;
+  }
+  noCsvMsg.style.display = "none";
+  listEl.style.display = "block";
+  const filtered = singleCard.allCards.filter(c =>
+    c.name.toLowerCase().includes(filter) ||
+    (c.table_no || "").toLowerCase().includes(filter) ||
+    (c.branch || "").toLowerCase().includes(filter)
+  );
+  listEl.innerHTML = "";
+  filtered.forEach(card => {
+    const row = document.createElement("div");
+    row.className = "sc-card-row" + (singleCard.selected && singleCard.selected.id === card.id ? " selected" : "");
+    row.textContent = `#${card.id}  ${card.name}  ·  ${card.table_no}  ·  ${card.branch || "—"}`;
+    row.addEventListener("click", () => selectCard(card));
+    listEl.appendChild(row);
+  });
+}
+
+function selectCard(card) {
+  singleCard.selected = card;
+  const info = document.getElementById("sc-selected-info");
+  info.style.display = "block";
+  info.textContent = `${card.name}  ·  ${card.table_no}  ·  ${card.branch || "—"}`;
+  document.getElementById("sc-overrides-panel").style.display = "block";
+  document.getElementById("sc-generate-btn").disabled = false;
+  document.getElementById("sc-clear-btn").disabled = false;
+  const singleKeys = [
+    "VIDEO_NAME_POS_X", "VIDEO_NAME_POS_Y", "VIDEO_TABLE_POS_X", "VIDEO_TABLE_POS_Y",
+    "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MIN", "VIDEO_NAME_FONT_SIZE_STEP",
+    "VIDEO_NAME_MAX_WIDTH", "VIDEO_NAME_CASING",
+    "VIDEO_TABLE_PREFIX", "VIDEO_TABLE_PREFIX_SPACING", "VIDEO_TABLE_NUMBER_FORMAT", "VIDEO_TABLE_CASING",
+    "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR", "FONT_FILENAME",
+  ];
+  singleKeys.forEach(key => {
+    const liveValue = readKeyValue(key);
+    setSingleValue(key, liveValue);
+  });
+  renderCardList();
+  fetchSinglePreview();
+}
+
+function clearSingleCardSelection() {
+  singleCard.selected = null;
+  document.getElementById("sc-selected-info").style.display = "none";
+  document.getElementById("sc-overrides-panel").style.display = "none";
+  document.getElementById("sc-generate-btn").disabled = true;
+  document.getElementById("sc-clear-btn").disabled = true;
+  renderCardList();
+  fetchPreview();
+}
+
+async function loadCardsForCsv(csvFilename) {
+  singleCard.selected = null;
+  singleCard.allCards = [];
+  document.getElementById("sc-selected-info").style.display = "none";
+  document.getElementById("sc-overrides-panel").style.display = "none";
+  document.getElementById("sc-generate-btn").disabled = true;
+  document.getElementById("sc-clear-btn").disabled = true;
+  if (!csvFilename) { renderCardList(); return; }
+  try {
+    const res = await fetch(`/cards?csv=${encodeURIComponent(csvFilename)}`);
+    if (!res.ok) { console.error("Failed to load cards:", await res.text()); renderCardList(); return; }
+    singleCard.allCards = await res.json();
+    renderCardList();
+  } catch (e) {
+    console.error("Error loading cards:", e);
+    renderCardList();
+  }
+}
+
+async function runSingleCard() {
+  const card = singleCard.selected;
+  if (!card) return;
+  const csv = document.getElementById("video-csv-select").value;
+  if (!csv) { alert("Select a CSV first."); return; }
+  const outputPath = document.getElementById("video-output-path").value.trim();
+  const overrides = collectSingleOverrides();
+  const btn = document.getElementById("sc-generate-btn");
+  const logPanel = document.getElementById("sc-log-panel");
+  const logEl = document.getElementById("sc-job-log");
+  const badge = document.getElementById("sc-job-badge");
+  btn.disabled = true;
+  logPanel.style.display = "block";
+  logEl.textContent = "";
+  badge.textContent = "Starting…";
+  badge.className = "updating";
+  try {
+    const res = await fetch("/run-single", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ card_id: card.id, csv, output: outputPath, overrides }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      badge.textContent = "Error: " + data.error;
+      badge.className = "err";
+      btn.disabled = false;
+      return;
+    }
+    singleCard.jobId = data.job_id;
+    const pollTimer = setInterval(async () => {
+      try {
+        const r = await fetch(`/run/${singleCard.jobId}`);
+        const job = await r.json();
+        logEl.textContent = job.lines.join("\n");
+        logEl.scrollTop = logEl.scrollHeight;
+        if (job.status !== "running") {
+          clearInterval(pollTimer);
+          badge.textContent = job.status === "done" ? "Done ✓" : "Error";
+          badge.className = job.status === "done" ? "ok" : "err";
+          btn.disabled = false;
+        } else {
+          badge.textContent = "Running…";
+          badge.className = "updating";
+        }
+      } catch (_) {}
+    }, 1000);
+  } catch (e) {
+    badge.textContent = "Error: " + e.message;
+    badge.className = "err";
+    btn.disabled = false;
+  }
+}
+
 async function init() {
   wireTabs();
   wireLiveUpdates();
   saveBtn.addEventListener("click", saveConfig);
   document.getElementById("run-video-btn").addEventListener("click", () => runJob("video"));
   document.getElementById("run-image-btn").addEventListener("click", () => runJob("image"));
+  document.getElementById("sc-generate-btn").addEventListener("click", runSingleCard);
+  document.getElementById("sc-clear-btn").addEventListener("click", clearSingleCardSelection);
+  document.getElementById("sc-search").addEventListener("input", renderCardList);
   document.getElementById("pause-btn").addEventListener("click", async () => {
     await fetch("/pause", { method: "POST" });
   });

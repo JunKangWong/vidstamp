@@ -3,6 +3,7 @@ from moviepy.video.fx import CrossFadeIn
 from PIL import ImageFont
 from card_model import DigitalCard
 from logging_utils import time_decorator, log_execution_time_with_details
+import config
 from config import (
     VIDEO_INPUT_PATH,
     VIDEO_OUTPUT_PATH,
@@ -45,36 +46,40 @@ def _fmt_table_no(value: str, fmt: str) -> str:
 
 
 class DigitalVideoBannerGenerator:
-    def __init__(self, output_path=None):
-        self.input_path = VIDEO_INPUT_PATH
-        self.output_path = output_path or VIDEO_OUTPUT_PATH
-        self.codec = VIDEO_CODEC
-        self.audio_codec = VIDEO_AUDIO_CODEC
-        self.bit_rate = VIDEO_BITRATE
-        self.name_font_size = VIDEO_NAME_FONT_SIZE
-        self.table_num_font_size = VIDEO_TABLE_FONT_SIZE
-        self.font_color = VIDEO_FONT_COLOR
-        self.font = FONT_PATH
-        self.name_pos_x = VIDEO_NAME_POS_X
-        self.name_pos_y = VIDEO_NAME_POS_Y
-        self.table_num_pos_x = VIDEO_TABLE_POS_X
-        self.table_num_pos_y = VIDEO_TABLE_POS_Y
-        self.text_duration = VIDEO_TEXT_DURATION
-        self.text_fade_duration = VIDEO_TEXT_FADE_DURATION
-        self.text_entrance_time = VIDEO_TEXT_ENTRANCE_TIME
+    def __init__(self, output_path=None, overrides=None):
+        self.overrides = overrides or {}
+        self.input_path = self._cfg('VIDEO_INPUT_PATH')
+        self.output_path = output_path or self._cfg('VIDEO_OUTPUT_PATH')
+        self.codec = self._cfg('VIDEO_CODEC')
+        self.audio_codec = self._cfg('VIDEO_AUDIO_CODEC')
+        self.bit_rate = self._cfg('VIDEO_BITRATE')
+        self.name_font_size = self._cfg('VIDEO_NAME_FONT_SIZE')
+        self.table_num_font_size = self._cfg('VIDEO_TABLE_FONT_SIZE')
+        self.font_color = self._cfg('VIDEO_FONT_COLOR')
+        self.font = self._cfg('FONT_PATH')
+        self.name_pos_x = self._cfg('VIDEO_NAME_POS_X')
+        self.name_pos_y = self._cfg('VIDEO_NAME_POS_Y')
+        self.table_num_pos_x = self._cfg('VIDEO_TABLE_POS_X')
+        self.table_num_pos_y = self._cfg('VIDEO_TABLE_POS_Y')
+        self.text_duration = self._cfg('VIDEO_TEXT_DURATION')
+        self.text_fade_duration = self._cfg('VIDEO_TEXT_FADE_DURATION')
+        self.text_entrance_time = self._cfg('VIDEO_TEXT_ENTRANCE_TIME')
+
+    def _cfg(self, key):
+        return self.overrides.get(key, getattr(config, key))
 
     def _fit_font_size(self, name: str) -> int:
-        font_size = VIDEO_NAME_FONT_SIZE
-        while font_size > VIDEO_NAME_FONT_SIZE_MIN:
+        font_size = self._cfg('VIDEO_NAME_FONT_SIZE')
+        while font_size > self._cfg('VIDEO_NAME_FONT_SIZE_MIN'):
             font = ImageFont.truetype(self.font, font_size)
             bbox = font.getbbox(name)
-            if (bbox[2] - bbox[0]) <= VIDEO_NAME_MAX_WIDTH:
+            if (bbox[2] - bbox[0]) <= self._cfg('VIDEO_NAME_MAX_WIDTH'):
                 break
-            font_size -= VIDEO_NAME_FONT_SIZE_STEP
+            font_size -= self._cfg('VIDEO_NAME_FONT_SIZE_STEP')
         return font_size
 
     def generate_name(self, name):
-        casing = VIDEO_NAME_CASING
+        casing = self._cfg('VIDEO_NAME_CASING')
         if casing == "upper":
             name = name.upper()
         elif casing == "lower":
@@ -97,8 +102,12 @@ class DigitalVideoBannerGenerator:
         return name_text
 
     def generate_table_num(self, no):
-        formatted_table_num = "{}{}{}".format(VIDEO_TABLE_PREFIX, " " * VIDEO_TABLE_PREFIX_SPACING, _fmt_table_no(no, VIDEO_TABLE_NUMBER_FORMAT))
-        casing = VIDEO_TABLE_CASING
+        formatted_table_num = "{}{}{}".format(
+            self._cfg('VIDEO_TABLE_PREFIX'),
+            " " * self._cfg('VIDEO_TABLE_PREFIX_SPACING'),
+            _fmt_table_no(no, self._cfg('VIDEO_TABLE_NUMBER_FORMAT')),
+        )
+        casing = self._cfg('VIDEO_TABLE_CASING')
         if casing == "upper":
             formatted_table_num = formatted_table_num.upper()
         elif casing == "lower":
@@ -126,6 +135,7 @@ class DigitalVideoBannerGenerator:
             codec=self.codec,
             audio_codec=self.audio_codec,
             bitrate=self.bit_rate,
+            ffmpeg_params=["-pix_fmt", "yuv420p"],
         )
 
     def generate_output_video_name(self, name, table_num):
@@ -136,7 +146,7 @@ class DigitalVideoBannerGenerator:
 
     @log_execution_time_with_details
     def process_video(self, name, table_num, language, branch, id=None):
-        filename = VIDEO_EN_FILENAME if language == "E" else VIDEO_CN_FILENAME
+        filename = self._cfg('VIDEO_EN_FILENAME') if language == "E" else self._cfg('VIDEO_CN_FILENAME')
         input_path = os.path.join(self.input_path, filename)
         input_video = VideoFileClip(input_path)
         input_video_audio = input_video.audio
