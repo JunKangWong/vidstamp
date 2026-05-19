@@ -101,7 +101,7 @@ VIDEO_TABLE_PREFIX = "Table Number:"
 # "as-is"  → show exactly as stored (e.g. "K8", "T1")
 # "number" → strip leading letters, show digits only (e.g. "8", "1")
 # "padded" → strip leading letters, zero-pad to 2 digits (e.g. "08", "01")
-VIDEO_TABLE_NUMBER_FORMAT = "padded"
+VIDEO_TABLE_NUMBER_FORMAT = "as-is"
 
 # Number of spaces inserted between the prefix and the table number
 VIDEO_TABLE_PREFIX_SPACING = 1
