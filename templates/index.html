@@ -1161,6 +1161,15 @@ async function saveConfig() {
     const v = readKeyValue(key);
     if (v !== undefined && v !== null && v !== "") payload[key] = v;
   });
+  const selectedTemplate = document.getElementById("video-template-select")?.value;
+  if (selectedTemplate) {
+    payload["VIDEO_EN_FILENAME"] = selectedTemplate;
+    payload["VIDEO_CN_FILENAME"] = selectedTemplate;
+  }
+  const videoCsv = document.getElementById("video-csv-select")?.value;
+  if (videoCsv) payload["VIDEO_CSV_PATH"] = videoCsv;
+  const imageCsv = document.getElementById("image-csv-select")?.value;
+  if (imageCsv) payload["IMAGE_CSV_PATH"] = imageCsv;
 
   try {
     const res = await fetch("/save", {

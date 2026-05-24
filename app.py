@@ -46,6 +46,8 @@ UI_KEYS = [
     "FONT_FILENAME",
     "VIDEO_PIXEL_FORMAT",
     "VIDEO_OUTPUT_PATH",
+    "VIDEO_EN_FILENAME", "VIDEO_CN_FILENAME",
+    "VIDEO_CSV_PATH", "IMAGE_CSV_PATH",
     "IMAGE_NAME_Y", "IMAGE_TABLE_Y",
     "IMAGE_NAME_FONT_SIZE", "IMAGE_TABLE_FONT_SIZE",
     "IMAGE_OUTPUT_ZIP_PATH",
@@ -278,6 +280,11 @@ def save():
     updates = {k: coerce_value(k, v) for k, v in data.items() if k in UI_KEYS}
     if not updates:
         return jsonify({"status": "error", "message": "No valid fields provided"}), 400
+    input_dir = Path(__file__).parent / "input"
+    if "VIDEO_CSV_PATH" in updates:
+        updates["VIDEO_CSV_PATH"] = str(input_dir / updates["VIDEO_CSV_PATH"])
+    if "IMAGE_CSV_PATH" in updates:
+        updates["IMAGE_CSV_PATH"] = str(input_dir / updates["IMAGE_CSV_PATH"])
     try:
         backup_path = rewrite_config(updates)
     except Exception as e:

@@ -42,8 +42,8 @@ PROGRESS_FILE_PATH = os.path.join(LOG_DIR, "progress.json")
 
 # Source video filenames — must exist inside VIDEO_INPUT_PATH
 # Set both to the same file if there is no language distinction
-VIDEO_EN_FILENAME = "INVITATIONC FINAL ADD NAME.mp4"  # Used when language == "E"
-VIDEO_CN_FILENAME = "INVITATIONC FINAL ADD NAME.mp4"  # Used when language == "C" or blank
+VIDEO_EN_FILENAME = "INVITATIONC FINAL_v1.mp4"  # Used when language == "E"
+VIDEO_CN_FILENAME = "INVITATIONC FINAL_v1.mp4"  # Used when language == "C" or blank
 
 # ─── Image Card Settings ──────────────────────────────────────────────────────
 
