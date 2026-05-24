@@ -2,63 +2,139 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Digital Card Config</title>
+<title>VidStamp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #1a1d23;
-    --panel: #242832;
-    --panel-soft: #2d323f;
-    --accent: #6aa3ff;
-    --text: #e6e8eb;
-    --muted: #9aa3b0;
-    --ok: #4ade80;
-    --warn: #fbbf24;
-    --err: #f87171;
-    --border: #353a47;
+    --bg:           #14161c;
+    --panel:        #1c1f28;
+    --panel-soft:   #252934;
+    --panel-hover:  #2e3345;
+    --accent:       #5b9aff;
+    --accent-glow:  rgba(91,154,255,0.18);
+    --text:         #dde1e7;
+    --muted:        #7a8699;
+    --ok:           #34d371;
+    --warn:         #f5a623;
+    --err:          #f06060;
+    --border:       #2a2f3d;
+    --border-focus: #5b9aff;
+    --font-ui:      "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono:    "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+    --radius-sm:    5px;
+    --radius-md:    8px;
+    --radius-lg:    12px;
+    --t-fast:       120ms ease;
+    --t-normal:     200ms ease;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: var(--font-ui);
     background: var(--bg);
     color: var(--text);
     font-size: 14px;
   }
   header {
-    padding: 12px 20px;
+    padding: 0 20px;
+    height: 48px;
     background: var(--panel);
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
   }
-  header h1 { margin: 0; font-size: 16px; font-weight: 600; }
-  .tabs { display: flex; gap: 4px; }
-  .tab {
-    padding: 6px 14px;
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .brand-mark {
+    width: 26px;
+    height: 26px;
+    background: var(--accent);
+    color: #0a0c12;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+  .brand-name {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--bg);
+    padding: 3px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
-    background: var(--panel-soft);
+  }
+  .tab {
+    padding: 4px 12px;
+    border: none;
+    background: transparent;
     color: var(--muted);
     cursor: pointer;
-    border-radius: 6px;
-    font-size: 13px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-ui);
+    letter-spacing: 0.01em;
+    transition: color var(--t-fast), background var(--t-fast);
+  }
+  .tab:hover:not(.active) {
+    background: var(--panel-soft);
+    color: var(--text);
   }
   .tab.active {
-    background: var(--accent);
-    color: #0a0d12;
-    border-color: var(--accent);
+    background: var(--panel);
+    color: var(--text);
     font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 0 1px var(--border);
   }
   main {
     display: grid;
-    grid-template-columns: minmax(340px, 35%) 1fr;
-    height: calc(100vh - 53px);
+    grid-template-columns: minmax(320px, 35%) 4px 1fr;
+    height: calc(100vh - 48px);
   }
   .controls {
     overflow-y: auto;
     padding: 20px;
-    border-right: 1px solid var(--border);
     background: var(--panel);
+  }
+  .controls::-webkit-scrollbar { width: 4px; }
+  .controls::-webkit-scrollbar-track { background: transparent; }
+  .controls::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .controls::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  .resize-handle {
+    cursor: col-resize;
+    background: var(--border);
+    transition: background var(--t-fast);
+    position: relative;
+    z-index: 10;
+  }
+  .resize-handle::after {
+    content: "";
+    position: absolute;
+    inset: 0 -6px;
+  }
+  .resize-handle:hover,
+  .resize-handle.dragging {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
   }
   .preview-panel {
     padding: 20px;
@@ -69,18 +145,20 @@
   }
   .preview-img-wrap {
     flex: 1;
-    background: #0d0f13;
+    background: #0a0c12;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    box-shadow: inset 0 2px 12px rgba(0,0,0,0.4);
   }
   .preview-img-wrap img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+    transition: opacity 300ms ease;
   }
   .preview-placeholder {
     color: var(--muted);
@@ -88,16 +166,15 @@
     padding: 40px;
   }
   .section {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
   .section-title {
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.10em;
     color: var(--muted);
-    margin-bottom: 10px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+    font-weight: 600;
   }
   .field {
     display: grid;
@@ -108,54 +185,121 @@
   }
   .field label {
     color: var(--muted);
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 500;
   }
   .field input[type="range"] {
     width: 100%;
     accent-color: var(--accent);
+    height: 4px;
+    cursor: pointer;
   }
   .field input[type="number"],
   .field input[type="text"],
   .field select {
     width: 100%;
-    padding: 5px 8px;
-    background: var(--panel-soft);
+    padding: 6px 10px;
+    background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--text);
     font-size: 13px;
-    font-family: inherit;
+    font-family: var(--font-ui);
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
+    outline: none;
+  }
+  .field input[type="number"]:hover:not(:focus),
+  .field input[type="text"]:hover:not(:focus),
+  .field select:hover:not(:focus) {
+    border-color: #3d4558;
+  }
+  .field input[type="number"]:focus,
+  .field input[type="text"]:focus,
+  .field select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-glow);
   }
   .field-slider {
     grid-template-columns: 130px 1fr 70px;
   }
+  .sample-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .sample-inputs input {
+    width: 100%;
+    padding: 6px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--font-ui);
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
+    outline: none;
+  }
+  .sample-inputs input:hover:not(:focus) { border-color: #3d4558; }
+  .sample-inputs input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow); }
   details {
     margin-bottom: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
   }
   details summary {
     cursor: pointer;
     color: var(--muted);
     font-size: 12px;
-    margin-bottom: 8px;
+    font-weight: 500;
+    padding: 8px 12px;
+    background: var(--panel-soft);
+    user-select: none;
+    transition: color var(--t-fast), background var(--t-fast);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0;
   }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before {
+    content: "›";
+    font-size: 14px;
+    transition: transform var(--t-fast);
+    display: inline-block;
+    color: var(--muted);
+  }
+  details[open] summary::before { transform: rotate(90deg); }
+  details summary:hover { color: var(--text); background: var(--panel-hover); }
+  details > *:not(summary) { padding: 8px 12px 4px; }
   .save-row {
     margin-top: 24px;
     padding-top: 16px;
+    padding-bottom: 16px;
     border-top: 1px solid var(--border);
+    position: sticky;
+    bottom: 0;
+    background: var(--panel);
+    box-shadow: 0 -8px 20px rgba(20,22,28,0.6);
   }
   button.primary {
     width: 100%;
-    padding: 10px;
+    padding: 10px 16px;
     background: var(--accent);
-    color: #0a0d12;
+    color: #05080f;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-weight: 600;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
+    font-family: var(--font-ui);
+    letter-spacing: 0.01em;
+    transition: filter var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
   }
-  button.primary:hover { filter: brightness(1.1); }
-  button.primary:disabled { opacity: 0.5; cursor: wait; }
+  button.primary:hover { filter: brightness(1.08); box-shadow: 0 0 16px var(--accent-glow); }
+  button.primary:active { transform: scale(0.98); filter: brightness(0.96); }
+  button.primary:disabled { opacity: 0.4; cursor: wait; box-shadow: none; }
   .status-line {
     margin-top: 10px;
     font-size: 12px;
@@ -165,64 +309,70 @@
   .status-line.ok { color: var(--ok); }
   .status-line.err { color: var(--err); }
   .preview-status {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--muted);
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    padding: 0 2px;
+    font-variant-numeric: tabular-nums;
   }
   .preview-status .ok { color: var(--ok); }
   .preview-status .updating { color: var(--warn); }
-  .sample-inputs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
   .tab-pane { display: none; }
   .tab-pane.active { display: block; }
   button.run-btn {
     width: 100%;
-    padding: 10px;
-    background: #2a7a4b;
-    color: #e6e8eb;
-    border: none;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 14px;
-    margin-top: 10px;
-  }
-  button.run-btn:hover { filter: brightness(1.15); }
-  button.run-btn:disabled { opacity: 0.5; cursor: wait; }
-  button.ctrl-btn {
-    flex: 1;
-    padding: 8px;
-    border: 1px solid var(--border);
-    background: var(--panel-soft);
-    color: var(--text);
-    border-radius: 6px;
+    padding: 10px 16px;
+    background: #1a3d2b;
+    color: #34d371;
+    border: 1px solid #2a6645;
+    border-radius: var(--radius-md);
     font-weight: 600;
     cursor: pointer;
     font-size: 13px;
+    font-family: var(--font-ui);
+    margin-top: 10px;
+    transition: background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
   }
-  button.ctrl-btn:hover { filter: brightness(1.15); }
+  button.run-btn:hover { background: #1f4a34; border-color: #3a8a5c; box-shadow: 0 0 12px rgba(52,211,113,0.12); }
+  button.run-btn:active { transform: scale(0.98); }
+  button.run-btn:disabled { opacity: 0.4; cursor: wait; }
+  button.ctrl-btn {
+    flex: 1;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: var(--font-ui);
+    transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+  }
+  button.ctrl-btn:hover:not(:disabled) { background: var(--panel-soft); color: var(--text); }
   button.ctrl-btn:disabled { opacity: 0.4; cursor: default; }
-  button.ctrl-btn.pause { border-color: var(--warn); color: var(--warn); }
-  button.ctrl-btn.resume { border-color: var(--ok); color: var(--ok); }
+  button.ctrl-btn.pause { border-color: rgba(245,166,35,0.35); color: var(--warn); }
+  button.ctrl-btn.pause:hover:not(:disabled) { background: rgba(245,166,35,0.08); }
+  button.ctrl-btn.resume { border-color: rgba(52,211,113,0.35); color: var(--ok); }
+  button.ctrl-btn.resume:hover:not(:disabled) { background: rgba(52,211,113,0.08); }
   .ctrl-row { display: flex; gap: 8px; margin-top: 8px; }
   .progress-wrap {
     margin-top: 10px;
-    background: var(--panel-soft);
+    background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 4px;
-    height: 8px;
+    border-radius: 999px;
+    height: 4px;
     overflow: hidden;
     display: none;
   }
   .progress-bar {
     height: 100%;
-    background: var(--accent);
+    background: linear-gradient(90deg, var(--accent), #7cb8ff);
     width: 0%;
     transition: width 0.4s ease;
+    border-radius: 999px;
   }
   .progress-label {
     font-size: 12px;
@@ -236,11 +386,11 @@
     padding-top: 10px;
   }
   .log-output {
-    background: #0d0f13;
+    background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 8px;
-    font-family: monospace;
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    font-family: var(--font-mono);
     font-size: 11px;
     height: 180px;
     overflow-y: auto;
@@ -248,37 +398,52 @@
     word-break: break-all;
     color: var(--text);
     margin: 6px 0 0;
+    box-shadow: inset 0 1px 6px rgba(0,0,0,0.3);
   }
+  .log-output::-webkit-scrollbar { width: 4px; }
+  .log-output::-webkit-scrollbar-track { background: transparent; }
+  .log-output::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .log-output::-webkit-scrollbar-thumb:hover { background: var(--muted); }
   .sc-card-list {
     max-height: 200px;
     overflow-y: auto;
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-md);
     background: var(--bg);
     margin-bottom: 6px;
   }
+  .sc-card-list::-webkit-scrollbar { width: 4px; }
+  .sc-card-list::-webkit-scrollbar-track { background: transparent; }
+  .sc-card-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .sc-card-list::-webkit-scrollbar-thumb:hover { background: var(--muted); }
   .sc-card-row {
-    padding: 6px 10px;
+    padding: 7px 12px;
     cursor: pointer;
     font-size: 11px;
-    font-family: monospace;
+    font-family: var(--font-mono);
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: background var(--t-fast), color var(--t-fast);
+    color: var(--muted);
   }
   .sc-card-row:last-child { border-bottom: none; }
-  .sc-card-row:hover { background: var(--panel-soft); }
+  .sc-card-row:hover { background: var(--panel-soft); color: var(--text); }
   .sc-card-row.selected {
-    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
     color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 20%, transparent);
   }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Digital Card Config</h1>
+  <div class="brand">
+    <span class="brand-mark">VS</span>
+    <span class="brand-name">VidStamp</span>
+  </div>
   <div class="tabs">
     <button class="tab active" data-tab="video">Video Banner</button>
     <button class="tab" data-tab="image">Image Card</button>
@@ -423,7 +588,7 @@
           <label>Max width (px)</label>
           <div style="display:flex;gap:6px;align-items:center">
             <input type="number" data-key="VIDEO_NAME_MAX_WIDTH" step="10" style="flex:1" />
-            <button id="reset-name-width" title="Reset to video frame width" style="white-space:nowrap;padding:4px 8px">↺ Video width</button>
+            <button id="reset-name-width" title="Reset to video frame width" style="white-space:nowrap;padding:4px 8px;background:var(--panel-soft);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:11px;font-family:var(--font-ui);cursor:pointer;">↺ Video width</button>
           </div>
         </div>
         <div class="field">
@@ -465,7 +630,7 @@
       <div class="section">
         <div class="section-title">Single Card</div>
         <input type="text" id="sc-search" placeholder="Search name / table / branch…"
-          style="width:100%;padding:6px 8px;background:var(--panel-soft);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px;margin-bottom:8px;" />
+          style="width:100%;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font-ui);margin-bottom:8px;outline:none;transition:border-color var(--t-fast),box-shadow var(--t-fast);" />
         <button id="sc-clear-btn" class="ctrl-btn" disabled
           style="margin-bottom:8px;padding:4px 10px;font-size:11px;flex:none;">
           Use sample text (clear selection)
@@ -517,7 +682,7 @@
             <label>Max width (px)</label>
             <div style="display:flex;gap:6px;align-items:center">
               <input type="number" data-single-key="VIDEO_NAME_MAX_WIDTH" step="10" style="flex:1" />
-              <button id="reset-name-width-single" title="Reset to video frame width" style="white-space:nowrap;padding:4px 8px">↺ Video width</button>
+              <button id="reset-name-width-single" title="Reset to video frame width" style="white-space:nowrap;padding:4px 8px;background:var(--panel-soft);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:11px;font-family:var(--font-ui);cursor:pointer;">↺ Video width</button>
             </div>
           </div>
           <div class="field">
@@ -630,6 +795,8 @@
       <div class="status-line" id="save-status">All previews are in-memory until you click Save.</div>
     </div>
   </div>
+
+  <div class="resize-handle" id="resize-handle"></div>
 
   <div class="preview-panel">
     <div class="preview-status">
@@ -1274,6 +1441,36 @@ async function init() {
 }
 
 init();
+
+// ── Panel Resizer ──────────────────────────────────────────────────
+(function() {
+  const handle = document.getElementById("resize-handle");
+  const mainEl = document.querySelector("main");
+  let dragging = false, startX = 0, startWidth = 0;
+
+  handle.addEventListener("mousedown", e => {
+    dragging = true;
+    startX = e.clientX;
+    startWidth = parseFloat(getComputedStyle(mainEl).gridTemplateColumns.split(" ")[0]);
+    handle.classList.add("dragging");
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    e.preventDefault();
+  });
+  document.addEventListener("mousemove", e => {
+    if (!dragging) return;
+    const total = mainEl.getBoundingClientRect().width;
+    const newW = Math.min(Math.max(startWidth + e.clientX - startX, 260), total - 340);
+    mainEl.style.gridTemplateColumns = newW + "px 4px 1fr";
+  });
+  document.addEventListener("mouseup", () => {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove("dragging");
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  });
+})();
 </script>
 
 </body>
