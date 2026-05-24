@@ -529,6 +529,10 @@
             <input type="number" data-single-key="VIDEO_NAME_FONT_SIZE_STEP" step="1" />
           </div>
           <div class="field">
+            <label>Auto-fit font size</label>
+            <input type="checkbox" id="sc-autofit" checked style="width:auto;margin:0" />
+          </div>
+          <div class="field">
             <label>Table size</label>
             <input type="number" data-single-key="VIDEO_TABLE_FONT_SIZE" step="1" />
           </div>
@@ -777,6 +781,7 @@ function wireLiveUpdates() {
     document.querySelector('[data-single-key="VIDEO_NAME_MAX_WIDTH"]').value = w;
     schedulePreview();
   });
+  document.getElementById("sc-autofit").addEventListener("change", schedulePreview);
 }
 
 let _pollTimer = null;
@@ -1031,6 +1036,8 @@ function collectSingleOverrides() {
     }
     out[key] = v;
   });
+  const autofitEl = document.getElementById("sc-autofit");
+  if (autofitEl) out["VIDEO_NAME_AUTOFIT"] = autofitEl.checked;
   return out;
 }
 

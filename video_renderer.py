@@ -92,7 +92,10 @@ class DigitalVideoBannerGenerator:
             pass
         else:
             name = name.title()
-        font_size = self._fit_font_size(name)
+        if self._cfg('VIDEO_NAME_AUTOFIT'):
+            font_size = self._fit_font_size(name)
+        else:
+            font_size = self._cfg('VIDEO_NAME_FONT_SIZE')
         name_text = TextClip(
             text=name,
             font_size=font_size,

@@ -85,14 +85,18 @@ VIDEO_NAME_FONT_SIZE_MIN = 24
 # Points to reduce font size by on each fitting iteration
 VIDEO_NAME_FONT_SIZE_STEP = 2
 
+# When True, font size is auto-reduced until the name fits within the max-width zone.
+# Intended to be overridden to False in single-card mode only, not saved globally.
+VIDEO_NAME_AUTOFIT = True
+
 # Maximum pixel width for the rendered name; names wider than this are shrunk
 # until they fit (or until VIDEO_NAME_FONT_SIZE_MIN is reached).
 # Frame width is 1080px; 900px leaves ~90px margin on each side.
-VIDEO_NAME_MAX_WIDTH = 900
+VIDEO_NAME_MAX_WIDTH = 770
 
 # Pixels of breathing room subtracted from each side of the max-width zone.
 # Effective name constraint = VIDEO_NAME_MAX_WIDTH - 2 * VIDEO_NAME_MARGIN
-VIDEO_NAME_MARGIN = 0
+VIDEO_NAME_MARGIN = 10
 
 # Font size for the table number overlay
 VIDEO_TABLE_FONT_SIZE = 26
