@@ -39,7 +39,7 @@ UI_KEYS = [
     "VIDEO_NAME_POS_X", "VIDEO_NAME_POS_Y",
     "VIDEO_TABLE_POS_X", "VIDEO_TABLE_POS_Y",
     "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MIN", "VIDEO_NAME_FONT_SIZE_STEP",
-    "VIDEO_NAME_MAX_WIDTH", "VIDEO_NAME_CASING",
+    "VIDEO_NAME_MAX_WIDTH", "VIDEO_NAME_MARGIN", "VIDEO_NAME_CASING",
     "VIDEO_TABLE_PREFIX", "VIDEO_TABLE_NUMBER_FORMAT", "VIDEO_TABLE_PREFIX_SPACING", "VIDEO_TABLE_CASING",
     "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR",
     "VIDEO_TEXT_ENTRANCE_TIME",
@@ -195,11 +195,13 @@ def get_config():
     values = current_config_values()
     current_tmpl = default_template_filename()
     duration = VIDEO_DURATIONS.get(current_tmpl, 0.0)
+    frame_w = VIDEO_CLIPS[current_tmpl].size[0] if current_tmpl in VIDEO_CLIPS else None
     return jsonify({
         **values,
         "_video_duration": duration,
         "_default_at_time": default_frame_time(),
         "_current_template": current_tmpl,
+        "_video_frame_width": frame_w,
         "_video_csv_filename": Path(config.VIDEO_CSV_PATH).name,
         "_image_csv_filename": Path(config.IMAGE_CSV_PATH).name,
     })

@@ -421,7 +421,14 @@
         <summary>Name width fitting</summary>
         <div class="field">
           <label>Max width (px)</label>
-          <input type="number" data-key="VIDEO_NAME_MAX_WIDTH" step="10" />
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="number" data-key="VIDEO_NAME_MAX_WIDTH" step="10" style="flex:1" />
+            <button id="reset-name-width" title="Reset to video frame width" style="white-space:nowrap;padding:4px 8px">↺ Video width</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Side margin (px)</label>
+          <input type="number" data-key="VIDEO_NAME_MARGIN" step="5" min="0" />
         </div>
         <div class="field">
           <label>Step (pt)</label>
@@ -508,7 +515,14 @@
           </div>
           <div class="field">
             <label>Max width (px)</label>
-            <input type="number" data-single-key="VIDEO_NAME_MAX_WIDTH" step="10" />
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="number" data-single-key="VIDEO_NAME_MAX_WIDTH" step="10" style="flex:1" />
+              <button id="reset-name-width-single" title="Reset to video frame width" style="white-space:nowrap;padding:4px 8px">↺ Video width</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Side margin (px)</label>
+            <input type="number" data-single-key="VIDEO_NAME_MARGIN" step="5" min="0" />
           </div>
           <div class="field">
             <label>Size step (pt)</label>
@@ -637,7 +651,7 @@ const VIDEO_KEYS = [
   "VIDEO_NAME_POS_X", "VIDEO_NAME_POS_Y",
   "VIDEO_TABLE_POS_X", "VIDEO_TABLE_POS_Y",
   "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MIN", "VIDEO_NAME_FONT_SIZE_STEP",
-  "VIDEO_NAME_MAX_WIDTH", "VIDEO_NAME_CASING", "VIDEO_TABLE_PREFIX", "VIDEO_TABLE_NUMBER_FORMAT", "VIDEO_TABLE_PREFIX_SPACING", "VIDEO_TABLE_CASING",
+  "VIDEO_NAME_MAX_WIDTH", "VIDEO_NAME_MARGIN", "VIDEO_NAME_CASING", "VIDEO_TABLE_PREFIX", "VIDEO_TABLE_NUMBER_FORMAT", "VIDEO_TABLE_PREFIX_SPACING", "VIDEO_TABLE_CASING",
   "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR", "VIDEO_PIXEL_FORMAT",
   "VIDEO_TEXT_ENTRANCE_TIME",
   "FONT_FILENAME",
@@ -750,6 +764,18 @@ function wireLiveUpdates() {
   });
   document.querySelectorAll("select[data-key], select[data-single-key]").forEach(el => {
     el.addEventListener("change", schedulePreview);
+  });
+  document.getElementById("reset-name-width").addEventListener("click", () => {
+    const w = window._videoFrameWidth;
+    if (!w) return;
+    document.querySelector('[data-key="VIDEO_NAME_MAX_WIDTH"]').value = w;
+    schedulePreview();
+  });
+  document.getElementById("reset-name-width-single").addEventListener("click", () => {
+    const w = window._videoFrameWidth;
+    if (!w) return;
+    document.querySelector('[data-single-key="VIDEO_NAME_MAX_WIDTH"]').value = w;
+    schedulePreview();
   });
 }
 
@@ -1088,7 +1114,7 @@ function selectCard(card) {
   const singleKeys = [
     "VIDEO_NAME_POS_X", "VIDEO_NAME_POS_Y", "VIDEO_TABLE_POS_X", "VIDEO_TABLE_POS_Y",
     "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MIN", "VIDEO_NAME_FONT_SIZE_STEP",
-    "VIDEO_NAME_MAX_WIDTH", "VIDEO_NAME_CASING",
+    "VIDEO_NAME_MAX_WIDTH", "VIDEO_NAME_MARGIN", "VIDEO_NAME_CASING",
     "VIDEO_TABLE_PREFIX", "VIDEO_TABLE_PREFIX_SPACING", "VIDEO_TABLE_NUMBER_FORMAT", "VIDEO_TABLE_CASING",
     "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR", "VIDEO_PIXEL_FORMAT", "FONT_FILENAME",
   ];
@@ -1230,6 +1256,7 @@ async function init() {
     slider.addEventListener("input", () => { input.value = slider.value; });
     input.addEventListener("input", () => { slider.value = input.value; });
     currentTemplateName = data._current_template || "";
+    window._videoFrameWidth = data._video_frame_width || null;
   } catch (e) {
     saveStatus.textContent = "Could not load config: " + e.message;
     saveStatus.className = "status-line err";

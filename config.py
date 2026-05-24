@@ -90,6 +90,10 @@ VIDEO_NAME_FONT_SIZE_STEP = 2
 # Frame width is 1080px; 900px leaves ~90px margin on each side.
 VIDEO_NAME_MAX_WIDTH = 900
 
+# Pixels of breathing room subtracted from each side of the max-width zone.
+# Effective name constraint = VIDEO_NAME_MAX_WIDTH - 2 * VIDEO_NAME_MARGIN
+VIDEO_NAME_MARGIN = 0
+
 # Font size for the table number overlay
 VIDEO_TABLE_FONT_SIZE = 26
 

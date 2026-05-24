@@ -15,6 +15,7 @@ from config import (
     VIDEO_NAME_FONT_SIZE_MIN,
     VIDEO_NAME_FONT_SIZE_STEP,
     VIDEO_NAME_MAX_WIDTH,
+    VIDEO_NAME_MARGIN,
     VIDEO_NAME_CASING,
     VIDEO_TABLE_FONT_SIZE,
     VIDEO_TABLE_PREFIX,
@@ -72,10 +73,11 @@ class DigitalVideoBannerGenerator:
 
     def _fit_font_size(self, name: str) -> int:
         font_size = self._cfg('VIDEO_NAME_FONT_SIZE')
+        effective_max = self._cfg('VIDEO_NAME_MAX_WIDTH') - 2 * self._cfg('VIDEO_NAME_MARGIN')
         while font_size > self._cfg('VIDEO_NAME_FONT_SIZE_MIN'):
             font = ImageFont.truetype(self.font, font_size)
             bbox = font.getbbox(name)
-            if (bbox[2] - bbox[0]) <= self._cfg('VIDEO_NAME_MAX_WIDTH'):
+            if (bbox[2] - bbox[0]) <= effective_max:
                 break
             font_size -= self._cfg('VIDEO_NAME_FONT_SIZE_STEP')
         return font_size

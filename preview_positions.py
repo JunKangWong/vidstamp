@@ -30,6 +30,7 @@ from config import (
     VIDEO_NAME_FONT_SIZE_MIN,
     VIDEO_NAME_FONT_SIZE_STEP,
     VIDEO_NAME_MAX_WIDTH,
+    VIDEO_NAME_MARGIN,
     VIDEO_NAME_CASING,
     VIDEO_TABLE_FONT_SIZE,
     VIDEO_TABLE_PREFIX,
@@ -154,6 +155,7 @@ def generate_preview_image(
     name_size_min = _r("VIDEO_NAME_FONT_SIZE_MIN", VIDEO_NAME_FONT_SIZE_MIN)
     name_size_step = _r("VIDEO_NAME_FONT_SIZE_STEP", VIDEO_NAME_FONT_SIZE_STEP)
     name_max_width = _r("VIDEO_NAME_MAX_WIDTH", VIDEO_NAME_MAX_WIDTH)
+    name_margin = _r("VIDEO_NAME_MARGIN", VIDEO_NAME_MARGIN)
     name_casing = _r("VIDEO_NAME_CASING", VIDEO_NAME_CASING)
     table_prefix = _r("VIDEO_TABLE_PREFIX", VIDEO_TABLE_PREFIX)
     table_number_fmt = _r("VIDEO_TABLE_NUMBER_FORMAT", VIDEO_TABLE_NUMBER_FORMAT)
@@ -169,6 +171,20 @@ def generate_preview_image(
         img = base_frame
 
     frame_w, frame_h = img.size
+
+    effective_width = name_max_width - 2 * name_margin
+
+    if draw_anchors:
+        overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        od = ImageDraw.Draw(overlay)
+        cx = frame_w // 2
+        for x in (cx - name_max_width // 2, cx + name_max_width // 2):
+            od.line([(x, 0), (x, frame_h)], fill=(0, 220, 255, 160), width=2)
+        if name_margin > 0:
+            for x in (cx - effective_width // 2, cx + effective_width // 2):
+                od.line([(x, 0), (x, frame_h)], fill=(255, 230, 0, 160), width=2)
+        img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
+
     draw = ImageDraw.Draw(img)
 
     if name_casing == "upper":
@@ -180,7 +196,7 @@ def generate_preview_image(
     else:
         name_text = name.title()
     name_font_size = fit_name_font_size(
-        name_text, font_path, name_size_max, name_size_min, name_size_step, name_max_width,
+        name_text, font_path, name_size_max, name_size_min, name_size_step, effective_width,
     )
     name_font = ImageFont.truetype(font_path, name_font_size)
     nx0, ny0, nx1, ny1 = draw.textbbox((0, 0), name_text, font=name_font)
