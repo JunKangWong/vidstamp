@@ -6,10 +6,10 @@ _HERE = Path(__file__).parent
 # ─── Paths ────────────────────────────────────────────────────────────────────
 
 # Input CSV for image card generation
-IMAGE_CSV_PATH = str(_HERE / "input" / "sample_namelist.csv")
+IMAGE_CSV_PATH = "/Users/junkang/Documents/repo/personal/digital_card_generator/input/sample_namelist.csv"
 
 # Input CSV for video banner generation
-VIDEO_CSV_PATH = str(_HERE / "input" / "trr_invitation_batch_1.csv")
+VIDEO_CSV_PATH = "/Users/junkang/Documents/repo/personal/digital_card_generator/input/TRR Invitation _batch2.csv"
 
 # Image template drawn on for each card
 IMAGE_TEMPLATE_PATH = str(_HERE / "template" / "trr_invitation.png")
@@ -42,8 +42,8 @@ PROGRESS_FILE_PATH = os.path.join(LOG_DIR, "progress.json")
 
 # Source video filenames — must exist inside VIDEO_INPUT_PATH
 # Set both to the same file if there is no language distinction
-VIDEO_EN_FILENAME = "INVITATIONC FINAL_v1.mp4"  # Used when language == "E"
-VIDEO_CN_FILENAME = "INVITATIONC FINAL_v1.mp4"  # Used when language == "C" or blank
+VIDEO_EN_FILENAME = "INVITATIONC FINAL_v2.mp4"  # Used when language == "E"
+VIDEO_CN_FILENAME = "INVITATIONC FINAL_v2.mp4"  # Used when language == "C" or blank
 
 # ─── Image Card Settings ──────────────────────────────────────────────────────
 
