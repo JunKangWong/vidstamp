@@ -300,6 +300,14 @@
       </div>
 
       <div class="section">
+        <div class="section-title">Template</div>
+        <div class="field">
+          <label>Video file</label>
+          <select id="video-template-select"></select>
+        </div>
+      </div>
+
+      <div class="section">
         <div class="section-title">Preview Frame</div>
         <div class="field field-slider">
           <label>Fade In At (s)</label>
@@ -430,6 +438,10 @@
         <div class="field">
           <label>Output Dir</label>
           <input type="text" id="video-output-path" data-key="VIDEO_OUTPUT_PATH" placeholder="./output/digital_video_banner" />
+        </div>
+        <div class="field">
+          <label>Start from ID</label>
+          <input type="number" id="video-from-id" min="1" placeholder="leave blank to resume" style="width:100%" />
         </div>
         <button class="run-btn" id="run-video-btn">Generate Videos</button>
         <div class="ctrl-row">
@@ -642,6 +654,7 @@ let debounceTimer = null;
 let lastObjectURL = null;
 let currentValues = {};
 let singleCard = { selected: null, allCards: [], jobId: null };
+let videoTemplates = []; // [{filename, duration}]
 
 const previewImg = document.getElementById("preview-img");
 const previewPlaceholder = document.getElementById("preview-placeholder");
@@ -695,6 +708,7 @@ async function fetchPreview() {
   const table_no = document.getElementById("sample-table").value || "T1";
   const at_time = parseFloat(document.getElementById("frame-time-input").value) || null;
   const overrides = collectOverrides();
+  const template = document.getElementById("video-template-select")?.value || null;
 
   previewStatus.textContent = "Updating…";
   previewStatus.className = "updating";
@@ -703,7 +717,7 @@ async function fetchPreview() {
     const res = await fetch("/preview", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, table_no, at_time, overrides }),
+      body: JSON.stringify({ name, table_no, at_time, overrides, template }),
     });
     if (!res.ok) {
       const err = await res.text();
@@ -819,11 +833,23 @@ async function runJob(type) {
   runBtn.disabled = true;
   if (type === "video") { pauseBtn.disabled = false; resumeBtn.disabled = false; }
 
+  const fromIdEl = document.getElementById("video-from-id");
+  const fromIdVal = (type === "video" && fromIdEl && fromIdEl.value.trim())
+    ? parseInt(fromIdEl.value, 10) : undefined;
+  if (fromIdVal && singleCard.allCards.length > 0 && fromIdVal > singleCard.allCards.length) {
+    alert(`Start ID must be between 1 and ${singleCard.allCards.length}`);
+    runBtn.disabled = false;
+    pauseBtn.disabled = true;
+    resumeBtn.disabled = true;
+    return;
+  }
+
+  const template = document.getElementById("video-template-select")?.value || null;
   try {
     const res = await fetch("/run", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, csv, output: outputEl.value.trim() }),
+      body: JSON.stringify({ type, csv, output: outputEl.value.trim(), ...(fromIdVal ? { from_id: fromIdVal } : {}), ...(template ? { template } : {}) }),
     });
     const data = await res.json();
     if (data.error) { badge.textContent = "Error: " + data.error; badge.className = "err"; runBtn.disabled = false; pauseBtn.disabled = true; resumeBtn.disabled = true; return; }
@@ -863,6 +889,39 @@ async function _pollJob(type) {
     document.getElementById("pause-btn").disabled = true;
     document.getElementById("resume-btn").disabled = true;
     _pollProgress(); // final progress update
+  }
+}
+
+async function loadVideoTemplates(currentTemplate) {
+  try {
+    const res = await fetch("/video-templates");
+    videoTemplates = await res.json();
+    const sel = document.getElementById("video-template-select");
+    sel.innerHTML = "";
+    videoTemplates.forEach(t => {
+      const opt = document.createElement("option");
+      opt.value = t.filename;
+      opt.textContent = t.filename;
+      sel.appendChild(opt);
+    });
+    if (currentTemplate) sel.value = currentTemplate;
+    sel.addEventListener("change", () => {
+      const chosen = videoTemplates.find(t => t.filename === sel.value);
+      if (chosen && chosen.duration != null) {
+        const slider = document.getElementById("frame-time-slider");
+        const input = document.getElementById("frame-time-input");
+        const max = Math.max(chosen.duration - 0.1, 1).toFixed(1);
+        slider.max = max;
+        input.max = max;
+        if (parseFloat(slider.value) > parseFloat(max)) {
+          slider.value = max;
+          input.value = max;
+        }
+      }
+      schedulePreview();
+    });
+  } catch (e) {
+    console.error("Could not load video templates:", e);
   }
 }
 
@@ -967,13 +1026,14 @@ async function fetchSinglePreview() {
   const table_no = singleCard.selected.table_no;
   const at_time = parseFloat(document.getElementById("frame-time-input").value) || null;
   const overrides = collectSingleOverrides();
+  const template = document.getElementById("video-template-select")?.value || null;
   previewStatus.textContent = "Updating…";
   previewStatus.className = "updating";
   try {
     const res = await fetch("/preview", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, table_no, at_time, overrides }),
+      body: JSON.stringify({ name, table_no, at_time, overrides, template }),
     });
     if (!res.ok) throw new Error(await res.text());
     const blob = await res.blob();
@@ -1062,6 +1122,11 @@ async function loadCardsForCsv(csvFilename) {
     const res = await fetch(`/cards?csv=${encodeURIComponent(csvFilename)}`);
     if (!res.ok) { console.error("Failed to load cards:", await res.text()); renderCardList(); return; }
     singleCard.allCards = await res.json();
+    const fromIdEl = document.getElementById("video-from-id");
+    if (fromIdEl) {
+      fromIdEl.max = singleCard.allCards.length;
+      fromIdEl.placeholder = `1–${singleCard.allCards.length} (leave blank to resume)`;
+    }
     renderCardList();
   } catch (e) {
     console.error("Error loading cards:", e);
@@ -1076,6 +1141,7 @@ async function runSingleCard() {
   if (!csv) { alert("Select a CSV first."); return; }
   const outputPath = document.getElementById("video-output-path").value.trim();
   const overrides = collectSingleOverrides();
+  const template = document.getElementById("video-template-select")?.value || null;
   const btn = document.getElementById("sc-generate-btn");
   const logPanel = document.getElementById("sc-log-panel");
   const logEl = document.getElementById("sc-job-log");
@@ -1089,7 +1155,7 @@ async function runSingleCard() {
     const res = await fetch("/run-single", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ card_id: card.id, csv, output: outputPath, overrides }),
+      body: JSON.stringify({ card_id: card.id, csv, output: outputPath, overrides, ...(template ? { template } : {}) }),
     });
     const data = await res.json();
     if (data.error) {
@@ -1141,7 +1207,7 @@ async function init() {
   // Show progress if a previous run left state behind
   _pollProgress();
 
-  let videoCsvHint = "", imageCsvHint = "";
+  let videoCsvHint = "", imageCsvHint = "", currentTemplateName = "";
   try {
     const res = await fetch("/config");
     const data = await res.json();
@@ -1163,12 +1229,13 @@ async function init() {
     // Keep the pair in sync
     slider.addEventListener("input", () => { input.value = slider.value; });
     input.addEventListener("input", () => { slider.value = input.value; });
+    currentTemplateName = data._current_template || "";
   } catch (e) {
     saveStatus.textContent = "Could not load config: " + e.message;
     saveStatus.className = "status-line err";
     return;
   }
-  await Promise.all([loadFonts(), loadInputs(videoCsvHint, imageCsvHint)]);
+  await Promise.all([loadFonts(), loadInputs(videoCsvHint, imageCsvHint), loadVideoTemplates(currentTemplateName)]);
   fetchPreview();
 }
 

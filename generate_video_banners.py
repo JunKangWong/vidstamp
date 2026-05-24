@@ -87,6 +87,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", default=VIDEO_OUTPUT_PATH)
     parser.add_argument("--single-id", type=int, default=None)
     parser.add_argument("--overrides", type=str, default=None)
+    parser.add_argument("--from-id", type=int, default=None)
     args = parser.parse_args()
 
     try:
@@ -94,6 +95,10 @@ if __name__ == "__main__":
     except json.JSONDecodeError as e:
         print(f"Error: invalid --overrides JSON: {e}")
         sys.exit(1)
+
+    if args.from_id is not None and args.single_id is None:
+        Path(LAST_PROCESSED_ID_PATH).parent.mkdir(parents=True, exist_ok=True)
+        Path(LAST_PROCESSED_ID_PATH).write_text(str(args.from_id - 1))
 
     # Protect the batch resume cursor from being overwritten by a single-card run
     prev_resume = None

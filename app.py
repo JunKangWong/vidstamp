@@ -55,12 +55,12 @@ CONFIG_FILE = Path(__file__).parent / "config.py"
 BACKUP_DIR = Path(__file__).parent / "output" / "config_backup"
 FONT_DIR = Path(__file__).parent / "font"
 
-# Keep the clip alive so we can re-extract frames on demand without re-opening
-# the 31 MB file each time. Cache extracted frames by timestamp.
-VIDEO_CLIP: VideoFileClip | None = None
-VIDEO_DURATION: float = 0.0
-FRAME_CACHE: dict[float, Image.Image] = {}
-FRAME_CACHE_MAX = 20
+# Keep clips alive so we can re-extract frames on demand without re-opening files.
+# Keyed by filename; cache frames by (filename, timestamp).
+VIDEO_CLIPS: dict[str, VideoFileClip] = {}
+VIDEO_DURATIONS: dict[str, float] = {}
+FRAME_CACHE: dict[tuple[str, float], Image.Image] = {}
+FRAME_CACHE_MAX = 40
 
 app = Flask(__name__)
 
@@ -68,29 +68,42 @@ app = Flask(__name__)
 _jobs: dict[str, dict] = {}
 
 
-def open_clip() -> tuple[VideoFileClip, float]:
-    """Open the template video and return the clip + its duration."""
-    video_path = os.path.join(config.VIDEO_INPUT_PATH, config.VIDEO_CN_FILENAME)
-    if not os.path.exists(video_path):
-        video_path = os.path.join(config.VIDEO_INPUT_PATH, config.VIDEO_EN_FILENAME)
-    clip = VideoFileClip(video_path)
-    return clip, clip.duration
+def load_clip(filename: str) -> tuple[VideoFileClip, float]:
+    """Load a template video by filename (lazy, cached)."""
+    if filename not in VIDEO_CLIPS:
+        path = os.path.join(config.VIDEO_INPUT_PATH, filename)
+        clip = VideoFileClip(path)
+        VIDEO_CLIPS[filename] = clip
+        VIDEO_DURATIONS[filename] = clip.duration
+    return VIDEO_CLIPS[filename], VIDEO_DURATIONS[filename]
 
 
-def get_frame_at(t: float) -> Image.Image:
+def default_template_filename() -> str:
+    cn = config.VIDEO_CN_FILENAME
+    if os.path.exists(os.path.join(config.VIDEO_INPUT_PATH, cn)):
+        return cn
+    return config.VIDEO_EN_FILENAME
+
+
+def get_frame_at(t: float, filename: str | None = None) -> Image.Image:
     """Return a PIL Image for the requested second, caching extracted frames."""
-    assert VIDEO_CLIP is not None
-    t = max(0.0, min(t, VIDEO_DURATION - 0.1))
-    key = round(t, 2)
+    if filename is None:
+        filename = default_template_filename()
+    load_clip(filename)
+    duration = VIDEO_DURATIONS[filename]
+    t = max(0.0, min(t, duration - 0.1))
+    key = (filename, round(t, 2))
     if key not in FRAME_CACHE:
         if len(FRAME_CACHE) >= FRAME_CACHE_MAX:
             FRAME_CACHE.pop(next(iter(FRAME_CACHE)))
-        FRAME_CACHE[key] = Image.fromarray(VIDEO_CLIP.get_frame(key))
+        FRAME_CACHE[key] = Image.fromarray(VIDEO_CLIPS[filename].get_frame(round(t, 2)))
     return FRAME_CACHE[key]
 
 
 def default_frame_time() -> float:
-    return min(config.VIDEO_TEXT_ENTRANCE_TIME, VIDEO_DURATION - 0.1)
+    filename = default_template_filename()
+    duration = VIDEO_DURATIONS.get(filename, 0.0)
+    return min(config.VIDEO_TEXT_ENTRANCE_TIME, max(duration - 0.1, 0.0))
 
 
 def current_config_values() -> dict:
@@ -180,13 +193,29 @@ def index():
 @app.route("/config")
 def get_config():
     values = current_config_values()
+    current_tmpl = default_template_filename()
+    duration = VIDEO_DURATIONS.get(current_tmpl, 0.0)
     return jsonify({
         **values,
-        "_video_duration": VIDEO_DURATION,
+        "_video_duration": duration,
         "_default_at_time": default_frame_time(),
+        "_current_template": current_tmpl,
         "_video_csv_filename": Path(config.VIDEO_CSV_PATH).name,
         "_image_csv_filename": Path(config.IMAGE_CSV_PATH).name,
     })
+
+
+@app.route("/video-templates")
+def list_video_templates():
+    template_dir = Path(config.VIDEO_INPUT_PATH)
+    results = []
+    for p in sorted(template_dir.glob("*.mp4")):
+        try:
+            _, dur = load_clip(p.name)
+        except Exception:
+            dur = None
+        results.append({"filename": p.name, "duration": dur})
+    return jsonify(results)
 
 
 @app.route("/fonts")
@@ -204,13 +233,19 @@ def list_fonts():
 
 @app.route("/preview", methods=["POST"])
 def preview():
-    if VIDEO_CLIP is None:
+    if not VIDEO_CLIPS:
         return jsonify({"error": "Video not loaded"}), 500
 
     data = request.get_json() or {}
     name = data.get("name") or "Sample Name"
     table_no = data.get("table_no") or "T1"
     at_time = data.get("at_time")
+    template = (data.get("template") or "").strip() or None
+    if template:
+        try:
+            load_clip(template)
+        except Exception as e:
+            return jsonify({"error": f"Cannot load template {template!r}: {e}"}), 400
     try:
         at_time = float(at_time) if at_time is not None else default_frame_time()
     except (TypeError, ValueError):
@@ -220,7 +255,7 @@ def preview():
     if "FONT_FILENAME" in overrides:
         overrides["FONT_PATH"] = str(Path(__file__).parent / overrides["FONT_FILENAME"])
 
-    frame = get_frame_at(at_time).copy()
+    frame = get_frame_at(at_time, filename=template).copy()
     img = generate_preview_image(
         name=name,
         table_no=table_no,
@@ -281,6 +316,7 @@ def start_run_single():
     csv_filename = data.get("csv", "").strip()
     output_path = data.get("output", "").strip()
     raw_overrides = data.get("overrides") or {}
+    template = (data.get("template") or "").strip() or None
 
     if card_id is None:
         return jsonify({"error": "card_id is required"}), 400
@@ -295,6 +331,9 @@ def start_run_single():
     overrides = {k: coerce_value(k, v) for k, v in raw_overrides.items() if k in UI_KEYS}
     if "FONT_FILENAME" in overrides:
         overrides["FONT_PATH"] = str(base / overrides.pop("FONT_FILENAME"))
+    if template:
+        overrides["VIDEO_EN_FILENAME"] = template
+        overrides["VIDEO_CN_FILENAME"] = template
 
     if not output_path:
         output_path = config.VIDEO_OUTPUT_PATH
@@ -336,10 +375,13 @@ def start_run_single():
 
 @app.route("/run", methods=["POST"])
 def start_run():
+    import json as _json
     data = request.get_json() or {}
     job_type = data.get("type")
     csv_filename = data.get("csv", "").strip()
     output_path = data.get("output", "").strip()
+    from_id = data.get("from_id")
+    template = (data.get("template") or "").strip() or None
 
     if job_type not in ("video", "image"):
         return jsonify({"error": "type must be 'video' or 'image'"}), 400
@@ -356,6 +398,11 @@ def start_run():
     elif not Path(output_path).is_absolute():
         output_path = str(base / output_path)
 
+    batch_overrides: dict = {}
+    if template and job_type == "video":
+        batch_overrides["VIDEO_EN_FILENAME"] = template
+        batch_overrides["VIDEO_CN_FILENAME"] = template
+
     job_id = uuid.uuid4().hex[:8]
     _jobs[job_id] = {"status": "running", "lines": []}
 
@@ -363,8 +410,13 @@ def start_run():
 
     def _run():
         try:
+            cmd = [sys.executable, str(base / script), "--csv", csv_path, "--output", output_path]
+            if from_id is not None and job_type == "video":
+                cmd += ["--from-id", str(int(from_id))]
+            if batch_overrides:
+                cmd += ["--overrides", _json.dumps(batch_overrides)]
             proc = subprocess.Popen(
-                [sys.executable, str(base / script), "--csv", csv_path, "--output", output_path],
+                cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
@@ -413,13 +465,14 @@ def resume_run():
 
 
 def main():
-    global VIDEO_CLIP, VIDEO_DURATION
-    print("Loading video template…")
-    VIDEO_CLIP, VIDEO_DURATION = open_clip()
+    default_tmpl = default_template_filename()
+    print(f"Loading video template: {default_tmpl}…")
+    load_clip(default_tmpl)
     initial_t = default_frame_time()
     initial_frame = get_frame_at(initial_t)
+    duration = VIDEO_DURATIONS[default_tmpl]
     print(f"Video loaded: {initial_frame.size[0]}x{initial_frame.size[1]}, "
-          f"duration {VIDEO_DURATION:.2f}s, initial frame @ t={initial_t:.2f}s")
+          f"duration {duration:.2f}s, initial frame @ t={initial_t:.2f}s")
     # Default 5001 — macOS reserves 5000 for AirPlay Receiver. Override via PORT env var.
     port = int(os.environ.get("PORT", "5001"))
     app.run(host="127.0.0.1", port=port, debug=False, threaded=True)
