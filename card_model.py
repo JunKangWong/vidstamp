@@ -41,7 +41,8 @@ class DigitalCardGenerator:
             for row in reader:
                 if int(row["id"]) >= start_id:
                     # "branch" or "location" are both accepted as the grouping column
-                    branch = row.get("branch") or row.get("location") or ""
+                    raw_branch = row.get("branch") or row.get("location") or ""
+                    branch = raw_branch.strip()
                     self.cards.append(
                         DigitalCard(
                             row["id"],

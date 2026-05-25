@@ -134,6 +134,7 @@ class DigitalVideoBannerGenerator:
         return table_no
 
     def output_video(self, final_video, output_name, branch):
+        branch = branch.strip().replace("\\", "").replace("/", "")
         output_path = os.path.join(self.output_path, branch)
         os.makedirs(output_path, exist_ok=True)
         output = os.path.join(output_path, output_name)

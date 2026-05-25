@@ -44,11 +44,34 @@ def _warn_overflow_names(cards) -> None:
         print("  Consider shortening these names in the CSV.\n")
 
 
+def _warn_branch_variants(cards) -> None:
+    from collections import defaultdict
+
+    groups = defaultdict(list)
+    for card in cards:
+        groups[card.get_branch().lower()].append(card.get_branch())
+
+    warnings = []
+    for _, variants in groups.items():
+        unique = sorted(set(variants))
+        if len(unique) > 1:
+            warnings.append(unique)
+
+    if warnings:
+        print(
+            f"\n⚠  BRANCH VARIANT WARNING — {len(warnings)} branch group(s) differ only by case/spacing:"
+        )
+        for variants in warnings:
+            print(f"  {', '.join(repr(v) for v in variants)}")
+        print("  Consider standardizing branch names in the CSV.\n")
+
+
 class DigitalVideoBannerProcessor:
     def __init__(self, data_source, single_id=None):
         self.digital_cards = self.load_digital_cards(data_source, single_id=single_id)
         if single_id is None:
             _warn_overflow_names(self.digital_cards)
+            _warn_branch_variants(self.digital_cards)
 
     def load_digital_cards(self, input_path, single_id=None):
         cardsGenerator = DigitalCardGenerator(input_path)
