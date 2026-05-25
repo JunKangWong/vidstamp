@@ -33,6 +33,7 @@ from config import (
     VIDEO_TEXT_ENTRANCE_TIME,
     VIDEO_EN_FILENAME,
     VIDEO_CN_FILENAME,
+    VIDEO_TEXT_MARGIN,
 )
 import os
 import re
@@ -102,6 +103,7 @@ class DigitalVideoBannerGenerator:
             color=self.font_color,
             font=self.font,
             duration=self.text_duration,
+            margin=(0, VIDEO_TEXT_MARGIN),
         )
         name_text = name_text.with_position((self.name_pos_x, self.name_pos_y))
         name_text = name_text.with_effects([CrossFadeIn(self.text_fade_duration)])
@@ -127,6 +129,7 @@ class DigitalVideoBannerGenerator:
             color=self.font_color,
             font=self.font,
             duration=self.text_duration,
+            margin=(0, VIDEO_TEXT_MARGIN),
         )
         table_no = table_no.with_position((self.table_num_pos_x, self.table_num_pos_y))
         table_no = table_no.with_effects([CrossFadeIn(self.text_fade_duration)])

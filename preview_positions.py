@@ -207,7 +207,7 @@ def generate_preview_image(
     nx0, ny0, nx1, ny1 = draw.textbbox((0, 0), name_text, font=name_font)
     name_w = nx1 - nx0
     name_x, name_y = resolve_position(name_pos_x, name_pos_y, name_w, frame_w, frame_h)
-    draw.text((name_x, name_y), name_text, fill=font_color, font=name_font)
+    draw.text((name_x, name_y - ny0), name_text, fill=font_color, font=name_font)
     if draw_anchors:
         draw_anchor_crosshair(draw, name_x, name_y)
 
@@ -222,7 +222,7 @@ def generate_preview_image(
     tx0, ty0, tx1, ty1 = draw.textbbox((0, 0), table_text, font=table_font)
     table_w = tx1 - tx0
     table_x, table_y = resolve_position(table_pos_x, table_pos_y, table_w, frame_w, frame_h)
-    draw.text((table_x, table_y), table_text, fill=font_color, font=table_font)
+    draw.text((table_x, table_y - ty0), table_text, fill=font_color, font=table_font)
     if draw_anchors:
         draw_anchor_crosshair(draw, table_x, table_y)
 

@@ -1,5 +1,5 @@
 from PIL import Image, ImageFont, ImageDraw
-from config import IMAGE_NAME_FONT_SIZE, IMAGE_TABLE_FONT_SIZE
+from config import IMAGE_NAME_FONT_SIZE, IMAGE_TABLE_FONT_SIZE, IMAGE_TEXT_BOTTOM_PADDING
 
 class ImageTextDrawer:
     def __init__(self, image_path, font_path, font_size=IMAGE_NAME_FONT_SIZE):
@@ -26,9 +26,9 @@ class ImageTextDrawer:
         :param position: A tuple indicating where to draw the text on the image.
         :param text_color: The color of the text.
         """
-        _, _, w, h = self.draw.textbbox((0, 0), text, font=self.font)
-        width = (self.width - w) / 2
-        self.draw.text((width, height), text, fill=text_color, font=self.font);        
+        x0, top, x1, _ = self.draw.textbbox((0, 0), text, font=self.font)
+        width = (self.width - (x1 - x0)) / 2
+        self.draw.text((width, height - top - IMAGE_TEXT_BOTTOM_PADDING), text, fill=text_color, font=self.font)
     
     def add_table_no(self, text, height, text_color=(0, 0, 0)):
         """
@@ -39,9 +39,9 @@ class ImageTextDrawer:
         :param text_color: The color of the text.
         """
         table_no = "Table No: {}".format(text)
-        _, _, w, h = self.draw.textbbox((0, 0), table_no, font=self.font2)
-        width = (self.width - w) / 2
-        self.draw.text((width, height), table_no, fill=text_color, font=self.font2);
+        x0, top, x1, _ = self.draw.textbbox((0, 0), table_no, font=self.font2)
+        width = (self.width - (x1 - x0)) / 2
+        self.draw.text((width, height - top - IMAGE_TEXT_BOTTOM_PADDING), table_no, fill=text_color, font=self.font2)
         
     def save_image(self, output_path):
         """

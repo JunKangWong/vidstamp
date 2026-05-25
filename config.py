@@ -59,6 +59,9 @@ IMAGE_NAME_Y = 1125
 # Y-coordinate (pixels from top) where the table number is placed on the card
 IMAGE_TABLE_Y = 1300
 
+# Pixels to shift image text upward; increase if descenders appear cut off.
+IMAGE_TEXT_BOTTOM_PADDING = 0
+
 # ─── Video Banner — Encoding ──────────────────────────────────────────────────
 
 # Video encoding codec (e.g. "libx264", "libx265")
@@ -124,6 +127,10 @@ VIDEO_NAME_CASING = "upper"
 
 # Text color for all overlays (name + table number)
 VIDEO_FONT_COLOR = "white"
+
+# Pixels of vertical whitespace added around each video text clip canvas.
+# Prevents descender clipping by giving TextClip extra vertical room.
+VIDEO_TEXT_MARGIN = 5
 
 # ─── Video Banner — Text Positioning ─────────────────────────────────────────
 

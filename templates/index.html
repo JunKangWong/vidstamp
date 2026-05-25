@@ -572,6 +572,14 @@
       </div>
 
       <div class="section">
+        <div class="section-title">Text Clip Padding</div>
+        <div class="field">
+          <label>Bottom margin (px)</label>
+          <input type="number" data-key="VIDEO_TEXT_MARGIN" step="1" min="0" />
+        </div>
+      </div>
+
+      <div class="section">
         <div class="section-title">Encoding</div>
         <div class="field">
           <label>Pixel format</label>
@@ -731,6 +739,10 @@
             <input type="text" data-single-key="VIDEO_FONT_COLOR" placeholder="white, black, #aa8800…" />
           </div>
           <div class="field">
+            <label>Bottom margin (px)</label>
+            <input type="number" data-single-key="VIDEO_TEXT_MARGIN" step="1" min="0" />
+          </div>
+          <div class="field">
             <label>Pixel format</label>
             <select data-single-key="VIDEO_PIXEL_FORMAT">
               <option value="yuv420p">yuv420p (compatible)</option>
@@ -773,6 +785,10 @@
         <div class="field">
           <label>Table</label>
           <input type="number" data-key="IMAGE_TABLE_FONT_SIZE" step="1" />
+        </div>
+        <div class="field">
+          <label>Bottom padding (px)</label>
+          <input type="number" data-key="IMAGE_TEXT_BOTTOM_PADDING" step="1" min="0" />
         </div>
       </div>
 
@@ -825,12 +841,14 @@ const VIDEO_KEYS = [
   "VIDEO_NAME_MAX_WIDTH", "VIDEO_NAME_MARGIN", "VIDEO_NAME_CASING", "VIDEO_TABLE_PREFIX", "VIDEO_TABLE_NUMBER_FORMAT", "VIDEO_TABLE_PREFIX_SPACING", "VIDEO_TABLE_CASING",
   "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR", "VIDEO_PIXEL_FORMAT",
   "VIDEO_TEXT_ENTRANCE_TIME",
+  "VIDEO_TEXT_MARGIN",
   "FONT_FILENAME",
   "VIDEO_OUTPUT_PATH",
 ];
 const IMAGE_KEYS = [
   "IMAGE_NAME_Y", "IMAGE_TABLE_Y",
   "IMAGE_NAME_FONT_SIZE", "IMAGE_TABLE_FONT_SIZE",
+  "IMAGE_TEXT_BOTTOM_PADDING",
   "IMAGE_OUTPUT_ZIP_PATH",
 ];
 const ALL_KEYS = [...VIDEO_KEYS, ...IMAGE_KEYS];
@@ -1299,7 +1317,7 @@ function selectCard(card) {
     "VIDEO_NAME_FONT_SIZE", "VIDEO_NAME_FONT_SIZE_MIN", "VIDEO_NAME_FONT_SIZE_STEP",
     "VIDEO_NAME_MAX_WIDTH", "VIDEO_NAME_MARGIN", "VIDEO_NAME_CASING",
     "VIDEO_TABLE_PREFIX", "VIDEO_TABLE_PREFIX_SPACING", "VIDEO_TABLE_NUMBER_FORMAT", "VIDEO_TABLE_CASING",
-    "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR", "VIDEO_PIXEL_FORMAT", "FONT_FILENAME",
+    "VIDEO_TABLE_FONT_SIZE", "VIDEO_FONT_COLOR", "VIDEO_TEXT_MARGIN", "VIDEO_PIXEL_FORMAT", "FONT_FILENAME",
   ];
   singleKeys.forEach(key => {
     const liveValue = readKeyValue(key);
