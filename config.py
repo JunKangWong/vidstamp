@@ -33,6 +33,7 @@ LOG_DIR = str(_HERE / "output" / "log")
 # Derived log file paths — change LOG_DIR above to relocate both
 LOG_FILE_PATH = os.path.join(LOG_DIR, "digital_video_banner.log")
 LAST_PROCESSED_ID_PATH = os.path.join(LOG_DIR, "last_processed_id.txt")
+LAST_BATCH_CSV_PATH = os.path.join(LOG_DIR, "last_batch_csv.txt")
 
 # Pause sentinel file — create this file to pause generation before the next video
 PAUSE_FILE_PATH = os.path.join(LOG_DIR, "PAUSE")

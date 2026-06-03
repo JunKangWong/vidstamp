@@ -392,6 +392,7 @@ def start_run():
     csv_filename = data.get("csv", "").strip()
     output_path = data.get("output", "").strip()
     from_id = data.get("from_id")
+    to_id = data.get("to_id")
     template = (data.get("template") or "").strip() or None
 
     if job_type not in ("video", "image"):
@@ -424,6 +425,8 @@ def start_run():
             cmd = [sys.executable, str(base / script), "--csv", csv_path, "--output", output_path]
             if from_id is not None and job_type == "video":
                 cmd += ["--from-id", str(int(from_id))]
+            if to_id is not None and job_type == "video":
+                cmd += ["--to-id", str(int(to_id))]
             if batch_overrides:
                 cmd += ["--overrides", _json.dumps(batch_overrides)]
             proc = subprocess.Popen(

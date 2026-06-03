@@ -620,8 +620,13 @@
           <input type="text" id="video-output-path" data-key="VIDEO_OUTPUT_PATH" placeholder="./output/digital_video_banner" />
         </div>
         <div class="field">
-          <label>Start from ID</label>
-          <input type="number" id="video-from-id" min="1" placeholder="leave blank to resume" style="width:100%" />
+          <label>Range (inclusive)</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="number" id="video-from-id" min="1" placeholder="From" style="flex:1;width:0" />
+            <span style="color:var(--muted);flex:none">–</span>
+            <input type="number" id="video-to-id" min="1" placeholder="To" style="flex:1;width:0" />
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">Both ends inclusive. Leave blank to resume / run to end.</div>
         </div>
         <button class="run-btn" id="run-video-btn">Generate Videos</button>
         <div class="ctrl-row">
@@ -1050,14 +1055,23 @@ async function runJob(type) {
   if (type === "video") { pauseBtn.disabled = false; resumeBtn.disabled = false; }
 
   const fromIdEl = document.getElementById("video-from-id");
+  const toIdEl = document.getElementById("video-to-id");
   const fromIdVal = (type === "video" && fromIdEl && fromIdEl.value.trim())
     ? parseInt(fromIdEl.value, 10) : undefined;
-  if (fromIdVal && singleCard.allCards.length > 0 && fromIdVal > singleCard.allCards.length) {
-    alert(`Start ID must be between 1 and ${singleCard.allCards.length}`);
-    runBtn.disabled = false;
-    pauseBtn.disabled = true;
-    resumeBtn.disabled = true;
-    return;
+  const toIdVal = (type === "video" && toIdEl && toIdEl.value.trim())
+    ? parseInt(toIdEl.value, 10) : undefined;
+  const total = singleCard.allCards.length;
+  if (fromIdVal && total > 0 && fromIdVal > total) {
+    alert(`From ID must be between 1 and ${total}`);
+    runBtn.disabled = false; pauseBtn.disabled = true; resumeBtn.disabled = true; return;
+  }
+  if (toIdVal && total > 0 && toIdVal > total) {
+    alert(`To ID must be between 1 and ${total}`);
+    runBtn.disabled = false; pauseBtn.disabled = true; resumeBtn.disabled = true; return;
+  }
+  if (fromIdVal && toIdVal && fromIdVal > toIdVal) {
+    alert(`From ID (${fromIdVal}) must not be greater than To ID (${toIdVal})`);
+    runBtn.disabled = false; pauseBtn.disabled = true; resumeBtn.disabled = true; return;
   }
 
   const template = document.getElementById("video-template-select")?.value || null;
@@ -1065,7 +1079,7 @@ async function runJob(type) {
     const res = await fetch("/run", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, csv, output: outputEl.value.trim(), ...(fromIdVal ? { from_id: fromIdVal } : {}), ...(template ? { template } : {}) }),
+      body: JSON.stringify({ type, csv, output: outputEl.value.trim(), ...(fromIdVal ? { from_id: fromIdVal } : {}), ...(toIdVal ? { to_id: toIdVal } : {}), ...(template ? { template } : {}) }),
     });
     const data = await res.json();
     if (data.error) { badge.textContent = "Error: " + data.error; badge.className = "err"; runBtn.disabled = false; pauseBtn.disabled = true; resumeBtn.disabled = true; return; }
@@ -1350,9 +1364,14 @@ async function loadCardsForCsv(csvFilename) {
     if (!res.ok) { console.error("Failed to load cards:", await res.text()); renderCardList(); return; }
     singleCard.allCards = await res.json();
     const fromIdEl = document.getElementById("video-from-id");
+    const toIdEl = document.getElementById("video-to-id");
     if (fromIdEl) {
       fromIdEl.max = singleCard.allCards.length;
-      fromIdEl.placeholder = `1–${singleCard.allCards.length} (leave blank to resume)`;
+      fromIdEl.placeholder = `From (1–${singleCard.allCards.length})`;
+    }
+    if (toIdEl) {
+      toIdEl.max = singleCard.allCards.length;
+      toIdEl.placeholder = `To (1–${singleCard.allCards.length})`;
     }
     renderCardList();
   } catch (e) {

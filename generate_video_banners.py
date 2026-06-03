@@ -10,6 +10,7 @@ from config import (
     VIDEO_CSV_PATH,
     VIDEO_OUTPUT_PATH,
     LAST_PROCESSED_ID_PATH,
+    LAST_BATCH_CSV_PATH,
     FONT_PATH,
     VIDEO_NAME_FONT_SIZE_MIN,
     VIDEO_NAME_MAX_WIDTH,
@@ -67,24 +68,29 @@ def _warn_branch_variants(cards) -> None:
 
 
 class DigitalVideoBannerProcessor:
-    def __init__(self, data_source, single_id=None):
-        self.digital_cards = self.load_digital_cards(data_source, single_id=single_id)
+    def __init__(self, data_source, single_id=None, end_id=None):
+        self.digital_cards = self.load_digital_cards(data_source, single_id=single_id, end_id=end_id)
         if single_id is None:
             _warn_overflow_names(self.digital_cards)
             _warn_branch_variants(self.digital_cards)
 
-    def load_digital_cards(self, input_path, single_id=None):
+    def load_digital_cards(self, input_path, single_id=None, end_id=None):
         cardsGenerator = DigitalCardGenerator(input_path)
         if single_id is not None:
             start_id = 1
         else:
-            try:
-                with open(LAST_PROCESSED_ID_PATH, "r") as f:
-                    start_id = int(f.read().strip()) + 1
-            except (FileNotFoundError, ValueError):
+            stored_csv = Path(LAST_BATCH_CSV_PATH).read_text().strip() if Path(LAST_BATCH_CSV_PATH).exists() else ""
+            if stored_csv == str(input_path):
+                try:
+                    start_id = int(Path(LAST_PROCESSED_ID_PATH).read_text().strip()) + 1
+                except (FileNotFoundError, ValueError):
+                    start_id = 1
+            else:
                 start_id = 1
+            Path(LAST_BATCH_CSV_PATH).parent.mkdir(parents=True, exist_ok=True)
+            Path(LAST_BATCH_CSV_PATH).write_text(str(input_path))
 
-        cardsGenerator.read_csv_and_generate_cards(start_id=start_id)
+        cardsGenerator.read_csv_and_generate_cards(start_id=start_id, end_id=end_id)
         cards = cardsGenerator.get_digital_cards()
 
         if single_id is not None:
@@ -111,6 +117,7 @@ if __name__ == "__main__":
     parser.add_argument("--single-id", type=int, default=None)
     parser.add_argument("--overrides", type=str, default=None)
     parser.add_argument("--from-id", type=int, default=None)
+    parser.add_argument("--to-id", type=int, default=None)
     args = parser.parse_args()
 
     try:
@@ -122,6 +129,7 @@ if __name__ == "__main__":
     if args.from_id is not None and args.single_id is None:
         Path(LAST_PROCESSED_ID_PATH).parent.mkdir(parents=True, exist_ok=True)
         Path(LAST_PROCESSED_ID_PATH).write_text(str(args.from_id - 1))
+        Path(LAST_BATCH_CSV_PATH).write_text(str(args.csv))
 
     # Protect the batch resume cursor from being overwritten by a single-card run
     prev_resume = None
@@ -131,7 +139,7 @@ if __name__ == "__main__":
         except FileNotFoundError:
             prev_resume = None
 
-    processor = DigitalVideoBannerProcessor(data_source=args.csv, single_id=args.single_id)
+    processor = DigitalVideoBannerProcessor(data_source=args.csv, single_id=args.single_id, end_id=args.to_id)
     print(f"Loaded {len(processor.digital_cards)} cards from {args.csv}")
     processor.generate_digital_banner(
         output_path=args.output,
