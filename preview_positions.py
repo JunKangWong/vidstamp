@@ -7,9 +7,9 @@ the result. Tune positions in config.py, re-run this — no video encoding.
 
 Usage:
     python3 preview_positions.py                         # first CSV row, default frame
-    python3 preview_positions.py "Hoi Pheh Leng" K8     # custom name, default frame
+    python3 preview_positions.py "Jane Doe" K8           # custom name, default frame
     python3 preview_positions.py --at 10                 # first CSV row, t=10s
-    python3 preview_positions.py "Hoi Pheh Leng" K8 --at 10.5
+    python3 preview_positions.py "Jane Doe" K8 --at 10.5
 """
 
 from __future__ import annotations

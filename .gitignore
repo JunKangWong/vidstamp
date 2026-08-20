@@ -1,9 +1,17 @@
-# exclude generated files
-output
-input
+# exclude generated files (keep the folder itself via .gitkeep)
+output/*
+!output/.gitkeep
 
-# exclude image or video templates
-template
+# exclude CSV attendee lists (keep the folder itself via .gitkeep)
+input/*
+!input/.gitkeep
+
+# exclude image/video templates and font files the user must supply
+# (keep the folders themselves via .gitkeep)
+template/*
+!template/.gitkeep
+font/*
+!font/.gitkeep
 
 # Exclude macOS file system files
 .DS_Store
